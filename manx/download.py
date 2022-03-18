@@ -3,17 +3,15 @@
 # Standard library imports
 from __future__ import annotations
 from abc import ABC, abstractmethod
+import urllib.error
+import urllib.parse
 import urllib.request
-from typing import TypeAlias
 
 # Third-party library imports
 from bs4 import BeautifulSoup  # type: ignore
 
 
-Links: TypeAlias = list[str]
-
-
-ELAEME_DATA_URL = "http://www.lel.ed.ac.uk/ihd/laeme2/tagged_data"
+ELAEME_DATA_URL = "http://www.lel.ed.ac.uk/ihd/laeme2/tagged_data/"
 
 ELALME_FILE_EXTS = [".txt"]
 
@@ -26,15 +24,27 @@ class Parser(ABC):
             self.filters = filters
 
     @abstractmethod
-    def parse(self, web_contents: str) -> Links:
+    def parse(self, web_contents: str) -> list[Link]:
         raise NotImplementedError
 
 
-class BSParser(Parser):
-    def parse(self, web_contents: str) -> Links:
+class LinkParser(Parser):
+    """LinkParser uses Beautiful Soup to retrieve file names aka links."""
+
+    def __init__(
+        self, root_url: str = "", filters: list[Filter] | None = None
+    ) -> None:
+        self.root_url = root_url
+        super().__init__(filters)
+
+    def parse(self, web_contents: str) -> list[Link]:
+        return self._parse_links(web_contents)
+
+    def _parse_links(self, web_contents: str) -> list[Link]:
         soup = BeautifulSoup(web_contents, "html.parser")
-        links = soup.find_all("a")
-        links = list(filter(self._apply, map(lambda x: x.get("href"), links)))
+        ahrefs = soup.find_all("a")
+        urls = list(filter(self._apply, map(lambda x: x.get("href"), ahrefs)))
+        links = [Link(self.root_url, u) for u in urls]
         return links
 
     def _apply(self, link: str) -> bool:
@@ -59,6 +69,8 @@ class Filter(ABC):
 
 
 class ELALMEFileFilter(Filter):
+    """ELALMEFileFilter filters out file names with the provided patterns."""
+
     def __init__(self, patterns: list[str] = ELALME_FILE_EXTS.copy()) -> None:
         super().__init__(patterns)
 
@@ -68,20 +80,22 @@ class ELALMEFileFilter(Filter):
 
 class Downloader:
     """Downloader handles downloading corpus files."""
+
     def __init__(
-            self,
-            root_url: str = ELAEME_DATA_URL,
-            parser: Parser | None = None,
-        ) -> None:
+        self,
+        root_url: str = ELAEME_DATA_URL,
+        parser: Parser | None = None,
+    ) -> None:
         self.root_url = root_url
         if not parser:
-            self.parser: Parser = BSParser()
+            self.parser: Parser = LinkParser(
+                root_url=root_url, filters=[ELALMEFileFilter()]
+            )
         else:
             self.parser = parser
 
     # TODO: Things to do from this point on:
     #     ==== DOWNLOADING CD. ====
-    #     1. The Downloader goes into the webpages and pulls their contents
     #     2. Contents are then stored as File objects
     #
     #     ==== SAVING ====
@@ -95,7 +109,41 @@ class Downloader:
     #        that it does and stop the program execution
     #     5. Individual contents of the file are then to be written to the
     #        appropritate subdirectories
-    def download(self) -> None:
-        response = urllib.request.urlopen(self.root_url)
-        contents = response.read().decode("UTF-8")
+    def download(self) -> None:  # TODO: this guy should return some container
+        contents = self.read_website_contents(self.root_url)
         links = self.parser.parse(contents)
+
+        texts = []
+        for l in links:
+            try:
+                text = self.read_website_contents(str(l))
+            except urllib.error.HTTPError:
+                # NOTE: catch HTTP Error 403: Forbidden for all_laeme_data.txt
+                continue
+            else:
+                texts.append(text)
+
+    def read_website_contents(self, url: str) -> str:
+        response = urllib.request.urlopen(url)
+        contents = response.read().decode("UTF-8")
+        return contents
+
+
+class Link:
+    def __init__(self, *urls: str) -> None:
+        if not urls:
+            self.base = ""
+            self.urls: tuple[str, ...] = tuple()
+            return
+        self.base = urls[0]
+        self.urls = urls[1:]
+
+    def __str__(self) -> str:
+        return self.resolved
+
+    @property
+    def resolved(self) -> str:
+        prev = self.base
+        for url in self.urls:
+            prev = urllib.parse.urljoin(prev, url)
+        return prev

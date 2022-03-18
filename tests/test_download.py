@@ -76,18 +76,18 @@ align="right">2019-05-14 15:33  </td><td align="right">213K</td><td> </td></tr>
         ("bestiaryt_mysql.txt", True),
         ("worcthfragst.html", False),
         ("?C=M;O=A", False),
-    ]
+    ],
 )
 def test_filter_elaeme(text: str, expected: bool) -> None:
     f = download.ELALMEFileFilter()
-    result = f(text)
-    assert result == expected
+    have = f(text)
+    assert have == expected
 
 
-def test_bs_parser(web_contents) -> None:
-    parser = download.BSParser(filters=[download.ELALMEFileFilter()])
-    result = parser.parse(web_contents)
-    assert len(result) == 6
+def test_link_parser(web_contents) -> None:
+    parser = download.LinkParser(filters=[download.ELALMEFileFilter()])
+    have = parser.parse(web_contents)
+    assert len(have) == 6
 
 
 @pytest.mark.parametrize(
@@ -98,15 +98,49 @@ def test_bs_parser(web_contents) -> None:
         ([download.ELALMEFileFilter()], "worcthcreedt_mysql.txt", True),
         ([], "worcthgrglt.html", True),
         (None, "worcthgrglt.dic", True),
-    ]
+    ],
 )
 def test_bs_apply(filters, text, expected) -> None:
-    parser = download.BSParser(filters=filters)
-    result = parser._apply(text)
-    assert result == expected
+    parser = download.LinkParser(filters=filters)
+    have = parser._apply(text)
+    assert have == expected
+
+
+@pytest.mark.parametrize(
+    "base, url, expected",
+    [
+        (
+            "http://www.lel.ed.ac.uk/ihd/laeme2/tagged_data/",
+            "dulwicht.txt",
+            "http://www.lel.ed.ac.uk/ihd/laeme2/tagged_data/dulwicht.txt",
+        ),
+        (
+            "http://www.lel.ed.ac.uk/ihd/laeme2/tagged_data/",
+            "digpmt_mysql.txt",
+            "http://www.lel.ed.ac.uk/ihd/laeme2/tagged_data/digpmt_mysql.txt",
+        ),
+        (
+            "http://www.lel.ed.ac.uk/ihd/laeme2/tagged_data/",
+            "?C=S;O=A",
+            "http://www.lel.ed.ac.uk/ihd/laeme2/tagged_data/?C=S;O=A",
+        ),
+    ],
+)
+def test_link_resolve(base: str, url: str, expected: str) -> None:
+    have = download.Link(base, url).resolved
+    assert have == expected
+
+
+def test_blank_link() -> None:
+    """Blank link evaluates to an empty string."""
+    have = download.Link()
+    assert str(have) == ""
 
 
 def test_downloader() -> None:
-    parser = download.BSParser([download.ELALMEFileFilter()])
+    parser = download.LinkParser(
+        root_url=download.ELAEME_DATA_URL,
+        filters=[download.ELALMEFileFilter()],
+    )
     downloader = download.Downloader(parser=parser)
     downloader.download()
