@@ -1,13 +1,14 @@
 INTERPRETER := python
+TESTS_DIR := tests
 
 .DEFAULT_GOAL := run
 
 run:
-	$(INTERPRETER) -m manx
+	$(INTERPRETER) -m manx -h
 .PHONY: run
 
 format:
-	black manx tests
+	black manx $(TEST_DIR)
 .PHONY: format
 
 types: format
@@ -15,8 +16,11 @@ types: format
 .PHONY: types
 
 test: types
-	pytest tests
+	pytest $(TESTS_DIR)
 .PHONY: test
+
+cov: types
+	pytest $(TESTS_DIR) --cov --cov-report=term-missing
 
 setup:
 	$(INTERPRETER) -m pip install --upgrade pip
