@@ -3,18 +3,21 @@
 # Standard library imports
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any
 
 
 DICT_SEP = "|"
 
 
+class ParsingError(Exception):
+    ...
+
+
 @dataclass(frozen=True, eq=False)
 class DictLine:
     _text_id: str | int
-    lexel: str
-    grammel: str
-    form: str
+    _lexel: str
+    _grammel: str
+    _form: str
     _count: str | int
 
     @property
@@ -26,7 +29,19 @@ class DictLine:
         return int(self._count)
 
     @property
-    def __dict__(self) -> dict[str, Any]: # type: ignore
+    def lexel(self) -> str:
+        return self._strip(self._lexel)
+
+    @property
+    def grammel(self) -> str:
+        return self._strip(self._grammel)
+
+    @property
+    def form(self) -> str:
+        return self._strip(self._form)
+
+    @property
+    def __dict__(self) -> dict[str, str | int]: # type: ignore
         return {
             "text_id": self.text_id,
             "lexel": self.lexel,
@@ -42,8 +57,14 @@ class DictLine:
             return True
         return False
 
+    def _strip(self, s: str) -> str:
+        return s.strip("'")
 
-def parse_dict_line(line: str, *, sep=DICT_SEP) -> DictLine:
+
+def parse_dict_line(line: str, *, sep: str = DICT_SEP) -> DictLine:
     fields = [f for f in line.split(sep) if f]
-    result = DictLine(*fields)
+    try:
+        result = DictLine(*fields)
+    except TypeError:
+        raise ParsingError(f"unable to parse: {line}")
     return result
