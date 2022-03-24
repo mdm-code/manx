@@ -32,9 +32,19 @@ from manx.parsing import parsers
         ),
     ]
 )
-def test_parse_single_dict_line(
-    case: str, want: parsers.DictLine
-) -> None:
+def test_parse_single_dict_line(case: str, want: parsers.DictLine) -> None:
     have = parsers.parse_dict_line(case)
-    # reveal_type(want)
     assert have == want
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "",
+        "|167|&|cj||12||",
+        ",177,'&','cj','AN',3,,",
+    ]
+)
+def test_parse_raises_parsing_error(case: str) -> None:
+    with pytest.raises(parsers.ParsingError):
+        parsers.parse_dict_line(case)
