@@ -7,6 +7,7 @@ import asyncio
 from dataclasses import dataclass
 import enum
 import httpx
+import io
 import os
 from tqdm import tqdm
 from typing import TYPE_CHECKING
@@ -224,6 +225,9 @@ class CorpusFile(Saver):
     @property
     def text(self) -> str:
         return self.web_contents.text
+
+    def as_io(self) -> io.StringIO:
+        return io.StringIO(self.web_contents.text)
 
     @property
     def type(self) -> FileType:
