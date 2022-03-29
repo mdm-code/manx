@@ -7,6 +7,12 @@ from dataclasses import dataclass
 from typing import Any, Generator, TextIO
 
 
+__all__ = [
+    "DictLine",
+    "DictParser",
+]
+
+
 DICT_SEP = "|"
 
 
