@@ -3,6 +3,7 @@
 # Standard library imports
 from __future__ import annotations
 from dataclasses import dataclass
+from typing import Any
 
 
 DICT_SEP = "|"
@@ -12,7 +13,7 @@ class ParsingError(Exception):
     ...
 
 
-@dataclass(frozen=True, eq=False)
+@dataclass(eq=False)
 class DictLine:
     _text_id: str | int
     _lexel: str
@@ -41,7 +42,7 @@ class DictLine:
         return self._strip(self._form)
 
     @property
-    def __dict__(self) -> dict[str, str | int]: # type: ignore
+    def __dict__(self) -> dict[str, Any]: # type: ignore
         return {
             "text_id": self.text_id,
             "lexel": self.lexel,

@@ -8,7 +8,7 @@ from manx.parsing import parsers
 
 
 @pytest.mark.parametrize(
-    "case, want",
+    "instance, want",
     [
         (
             "|68|'witannot'|'vps21-apn'|'NITE'|2||",
@@ -32,19 +32,19 @@ from manx.parsing import parsers
         ),
     ]
 )
-def test_parse_single_dict_line(case: str, want: parsers.DictLine) -> None:
-    have = parsers.parse_dict_line(case)
+def test_parse_single_dict_line(instance: str, want: parsers.DictLine) -> None:
+    have = parsers.parse_dict_line(instance)
     assert have == want
 
 
 @pytest.mark.parametrize(
-    "case",
+    "instance",
     [
         "",
         "|167|&|cj||12||",
         ",177,'&','cj','AN',3,,",
     ]
 )
-def test_parse_raises_parsing_error(case: str) -> None:
+def test_parse_raises_parsing_error(instance: str) -> None:
     with pytest.raises(parsers.ParsingError):
-        parsers.parse_dict_line(case)
+        parsers.parse_dict_line(instance)
