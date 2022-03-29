@@ -2,8 +2,9 @@
 
 # Standard library imports
 from __future__ import annotations
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Generator, TextIO
 
 
 DICT_SEP = "|"
@@ -13,7 +14,7 @@ class ParsingError(Exception):
     ...
 
 
-@dataclass(eq=False)
+@dataclass(frozen=True, eq=False)
 class DictLine:
     _text_id: str | int
     _lexel: str
@@ -42,7 +43,7 @@ class DictLine:
         return self._strip(self._form)
 
     @property
-    def __dict__(self) -> dict[str, Any]: # type: ignore
+    def __dict__(self) -> dict[str, Any]:  # type: ignore
         return {
             "text_id": self.text_id,
             "lexel": self.lexel,
@@ -62,10 +63,24 @@ class DictLine:
         return s.strip("'")
 
 
-def parse_dict_line(line: str, *, sep: str = DICT_SEP) -> DictLine:
-    fields = [f for f in line.split(sep) if f]
-    try:
-        result = DictLine(*fields)
-    except TypeError:
-        raise ParsingError(f"unable to parse: {line}")
-    return result
+class Parser(ABC):
+    @abstractmethod
+    def parse(self, fp: TextIO) -> Generator[Any, None, None]:
+        raise NotImplementedError
+
+
+class DictParser(Parser):
+    def __init__(self, sep: str = DICT_SEP) -> None:
+        self.sep = sep
+
+    def parse(self, fp: TextIO) -> Generator[DictLine, None, None]:
+        for line in fp:
+            yield self._parse(line)
+
+    def _parse(self, line: str) -> DictLine:
+        fields = [f for f in line.strip().split(self.sep) if f]
+        try:
+            result = DictLine(*fields)
+        except TypeError:
+            raise ParsingError(f"unable to parse: {line}")
+        return result
