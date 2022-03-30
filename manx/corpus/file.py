@@ -2,7 +2,9 @@
 
 # Standard library imports
 from __future__ import annotations
+import enum
 import os
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 # Local library imports
@@ -10,7 +12,21 @@ if TYPE_CHECKING:
     from .download import Saver
 
 
-__all__ = ["Dir", "traverse"]
+__all__ = ["Dir", "DirName", "traverse"]
+
+
+class DirName(str, enum.Enum):
+    texts = "texts"
+    dicts = "dicts"
+
+    @classmethod
+    @property
+    def members(cls) -> set[str]:
+        return set(cls.__members__.keys())
+
+    @classmethod
+    def is_valid(cls, s: str) -> bool:
+        return s in cls.members  # type: ignore
 
 
 class Dir:
@@ -45,6 +61,25 @@ class Dir:
         other.parent = self
         self.children.append(other)
         return other
+
+
+def from_dir(root: str) -> None:
+    """from_dir reconstructs the corpus directory structure in memory."""
+    if not os.path.isdir(root):
+        raise Exception
+
+    for d in filter(
+        lambda x: x.is_dir(),
+        (Path(os.path.join(root, p)) for p in os.listdir(root)),
+    ):
+        if DirName.is_valid(d.name):
+            files = list(
+                filter(
+                    lambda x: x.is_file(),
+                    (d.joinpath(p) for p in os.listdir(d)),
+                )
+            )
+            pass
 
 
 def traverse(node: Dir) -> None:
