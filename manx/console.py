@@ -44,11 +44,11 @@ def main():
             files = downloader.download(args.verbose)
             root = corpus.Dir(args.root, files=[])
             root / corpus.Dir(
-                "dicts",
+                corpus.DirName.dicts.value,
                 files=[f for f in files if f.type == corpus.FileType.Dict],
             )
             root / corpus.Dir(
-                "texts",
+                corpus.DirName.texts.value,
                 files=[f for f in files if f.type == corpus.FileType.Text],
             )
             corpus.traverse(root)
