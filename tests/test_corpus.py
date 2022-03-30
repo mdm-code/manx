@@ -161,13 +161,13 @@ def test_blank_link(case: download.Link) -> None:
 @pytest.mark.parametrize(
     "case, want",
     [
-        (download.WebContents("", 200), True),
-        (download.WebContents("", 203), False),
-        (download.WebContents("", 403), False),
-        (download.WebContents("", 404), False),
+        (download.Contents("", 200), True),
+        (download.Contents("", 203), False),
+        (download.Contents("", 403), False),
+        (download.Contents("", 404), False),
     ],
 )
-def test_web_contents_status(case: download.WebContents, want: bool) -> None:
+def test_web_contents_status(case: download.Contents, want: bool) -> None:
     have = case.ok
     assert have == want
 
@@ -176,33 +176,33 @@ def test_web_contents_status(case: download.WebContents, want: bool) -> None:
     "case, want",
     [
         (
-            download.CorpusFile("eul107t.txt", download.WebContents("", 200)),
+            download.CorpusFile("eul107t.txt", download.Contents("", 200)),
             download.FileType.Text,
         ),
         (
             download.CorpusFile(
-                "add27909t_mysql.txt", download.WebContents("", 200)
+                "add27909t_mysql.txt", download.Contents("", 200)
             ),
             download.FileType.Dict,
         ),
         (
             download.CorpusFile(
-                "royalkgct.html", download.WebContents("", 200)
+                "royalkgct.html", download.Contents("", 200)
             ),
             download.FileType.Html,
         ),
         (
             download.CorpusFile(
-                "bodley57t.tag", download.WebContents("", 200)
+                "bodley57t.tag", download.Contents("", 200)
             ),
             download.FileType.Tags,
         ),
         (
-            download.CorpusFile("", download.WebContents("", 200)),
+            download.CorpusFile("", download.Contents("", 200)),
             download.FileType.Unidentified,
         ),
         (
-            download.CorpusFile("fonts.css", download.WebContents("", 200)),
+            download.CorpusFile("fonts.css", download.Contents("", 200)),
             download.FileType.Unidentified,
         ),
     ],
@@ -215,7 +215,7 @@ def test_corpus_file_type(
 
 def test_corpus_file_type_param():
     """Check the hasattr code section of the method on CorpusFile."""
-    case = download.CorpusFile("egstellat.txt", download.WebContents("", 200))
+    case = download.CorpusFile("egstellat.txt", download.Contents("", 200))
     _ = case.type
     assert case.type == download.FileType.Text
 
@@ -224,17 +224,17 @@ def test_corpus_file_type_param():
     "case, text, ok",
     [
         (
-            download.CorpusFile("", download.WebContents("foo", 403)),
+            download.CorpusFile("", download.Contents("foo", 403)),
             "foo",
             False,
         ),
         (
-            download.CorpusFile("", download.WebContents("bar", 200)),
+            download.CorpusFile("", download.Contents("bar", 200)),
             "bar",
             True,
         ),
         (
-            download.CorpusFile("", download.WebContents("baz", 300)),
+            download.CorpusFile("", download.Contents("baz", 300)),
             "baz",
             False,
         ),
@@ -250,7 +250,7 @@ def test_corpus_file_promoted_fields(
 def test_corpus_file_saving(mocker) -> None:
     m = mocker.mock_open()
     mocker.patch("builtins.open", m)
-    f = download.CorpusFile("file.txt", download.WebContents("foo", 201))
+    f = download.CorpusFile("file.txt", download.Contents("foo", 201))
     directory = file.Dir("", [])
     f.save(directory)
     m.assert_called_once_with(f.name, "w")
@@ -302,10 +302,10 @@ def test_dir_traverse(mocker) -> None:
             "dicts",
             files=[
                 download.CorpusFile(
-                    "foo.txt", download.WebContents("hello", 200)
+                    "foo.txt", download.Contents("hello", 200)
                 ),
                 download.CorpusFile(
-                    "bar.txt", download.WebContents("world", 200)
+                    "bar.txt", download.Contents("world", 200)
                 ),
             ],
         ),

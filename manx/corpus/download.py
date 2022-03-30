@@ -57,7 +57,7 @@ class Parser(ABC):
             self.filters = filters
 
     @abstractmethod
-    def parse(self, web_contents: str) -> list[Link]:
+    def parse(self, contents: str) -> list[Link]:
         raise NotImplementedError
 
 
@@ -182,19 +182,19 @@ class Downloader:
         web_contents = await self.read_website_contents(str(link), client)
         if b := kwargs.get("bar", None):
             b.update(1)
-        return CorpusFile(name=link.name, web_contents=web_contents)
+        return CorpusFile(name=link.name, contents=web_contents)
 
     async def read_website_contents(
         self, url: str, client: httpx.AsyncClient
-    ) -> WebContents:
+    ) -> Contents:
         async with httpx.AsyncClient() as client:
             response = await client.get(url)
             contents = response.read().decode("UTF-8")
             try:
                 response.raise_for_status()
             except httpx.HTTPStatusError:
-                return WebContents("", response.status_code)
-        return WebContents(contents, response.status_code)
+                return Contents("", response.status_code)
+        return Contents(contents, response.status_code)
 
 
 class FileType(enum.Enum):
@@ -214,20 +214,20 @@ class Saver(ABC):
 class CorpusFile(Saver):
     """CorpusFile represents a corpus text file from ELAEME."""
 
-    def __init__(self, name: str, web_contents: WebContents) -> None:
+    def __init__(self, name: str, contents: Contents) -> None:
         self.name = name
-        self.web_contents = web_contents
+        self.contents = contents
 
     @property
     def ok(self) -> bool:
-        return self.web_contents.ok
+        return self.contents.ok
 
     @property
     def text(self) -> str:
-        return self.web_contents.text
+        return self.contents.text
 
     def as_io(self) -> io.StringIO:
-        return io.StringIO(self.web_contents.text)
+        return io.StringIO(self.contents.text)
 
     @property
     def type(self) -> FileType:
@@ -259,7 +259,7 @@ class CorpusFile(Saver):
 
 
 @dataclass
-class WebContents:
+class Contents:
     text: str
     status_code: int
 
