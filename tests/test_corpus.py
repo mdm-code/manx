@@ -350,4 +350,4 @@ def test_downloader(mocker, web_contents: str) -> None:
 
 def test_from_dir() -> None:
     root = "elaeme"
-    d = file.from_dir(root)
+    d = file.from_root(root)

@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 # Local library imports
+from .download import FileContents, CorpusFile
+
 if TYPE_CHECKING:
     from .download import Saver
 
@@ -63,23 +65,33 @@ class Dir:
         return other
 
 
-def from_dir(root: str) -> None:
-    """from_dir reconstructs the corpus directory structure in memory."""
+def from_root(root: str) -> Dir:
+    """from_root reconstructs the corpus directory structure in memory."""
     if not os.path.isdir(root):
         raise Exception
+
+    directory = Dir(root, files=[])
+
+    def _read(fn: os.PathLike) -> FileContents:
+        with open(fn) as f:
+            result = FileContents(text=f.read())
+        return result
 
     for d in filter(
         lambda x: x.is_dir(),
         (Path(os.path.join(root, p)) for p in os.listdir(root)),
     ):
         if DirName.is_valid(d.name):
+            subdir = directory / Dir(d.name, files=[])
             files = list(
                 filter(
                     lambda x: x.is_file(),
                     (d.joinpath(p) for p in os.listdir(d)),
                 )
             )
-            pass
+            corpus_files = [CorpusFile(f.name, _read(f)) for f in files]
+            subdir.files.extend(corpus_files)
+    return directory
 
 
 def traverse(node: Dir) -> None:
