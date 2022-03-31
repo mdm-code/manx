@@ -2,26 +2,42 @@
 
 # Standard library imports
 from __future__ import annotations
+import enum
+from functools import wraps
 import os
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import Callable
 
 # Local library imports
-if TYPE_CHECKING:
-    from .download import Saver
+from .download import FileContents, CorpusFile
 
 
-__all__ = ["Dir", "traverse"]
+__all__ = ["Dir", "DirName", "files", "from_root", "traverse"]
+
+
+class DirName(str, enum.Enum):
+    texts = "texts"
+    dicts = "dicts"
+
+    @classmethod
+    @property
+    def members(cls) -> set[str]:
+        return set(cls.__members__.keys())
+
+    @classmethod
+    def is_valid(cls, s: str) -> bool:
+        return s in cls.members  # type: ignore
 
 
 class Dir:
     """Dir represents a directory node in the file system."""
 
     def __init__(
-        self, name: str, files: list[Saver], parent: Dir | None = None
+        self, name: str, files: list[CorpusFile], parent: Dir | None = None
     ) -> None:
         self.name = name
         self.parent = parent
-        self.files: list[Saver] = files
+        self.files: list[CorpusFile] = files
         self.children: list[Dir] = []
 
     @property
@@ -45,6 +61,48 @@ class Dir:
         other.parent = self
         self.children.append(other)
         return other
+
+
+def files(func: Callable[[str], Dir]) -> Callable[[str], list[CorpusFile]]:
+    @wraps(func)
+    def wrapped(*args: str, **kwargs: str):
+        d = func(*args, **kwargs)
+        result: list[CorpusFile] = []
+        for subdir in d.children:
+            result.extend(subdir.files)
+        return result
+
+    return wrapped
+
+
+@files
+def from_root(root: str) -> Dir:
+    """from_root reconstructs the corpus directory structure in memory."""
+    if not os.path.isdir(root):
+        raise ValueError
+
+    directory = Dir(root, files=[])
+
+    def _read(fn: os.PathLike) -> FileContents:
+        with open(fn) as f:
+            result = FileContents(text=f.read())
+        return result
+
+    for d in filter(
+        lambda x: x.is_dir(),
+        (Path(os.path.join(root, p)) for p in os.listdir(root)),
+    ):
+        if DirName.is_valid(d.name):
+            subdir = directory / Dir(d.name, files=[])
+            files = list(
+                filter(
+                    lambda x: x.is_file(),
+                    (d.joinpath(p) for p in os.listdir(d)),
+                )
+            )
+            corpus_files = [CorpusFile(f.name, _read(f)) for f in files]
+            subdir.files.extend(corpus_files)
+    return directory
 
 
 def traverse(node: Dir) -> None:

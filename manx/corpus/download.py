@@ -2,9 +2,8 @@
 
 # Standard library imports
 from __future__ import annotations
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 import asyncio
-from dataclasses import dataclass
 import enum
 import httpx
 import io
@@ -57,7 +56,7 @@ class Parser(ABC):
             self.filters = filters
 
     @abstractmethod
-    def parse(self, web_contents: str) -> list[Link]:
+    def parse(self, contents: str) -> list[Link]:
         raise NotImplementedError
 
 
@@ -182,7 +181,7 @@ class Downloader:
         web_contents = await self.read_website_contents(str(link), client)
         if b := kwargs.get("bar", None):
             b.update(1)
-        return CorpusFile(name=link.name, web_contents=web_contents)
+        return CorpusFile(name=link.name, contents=web_contents)
 
     async def read_website_contents(
         self, url: str, client: httpx.AsyncClient
@@ -214,20 +213,16 @@ class Saver(ABC):
 class CorpusFile(Saver):
     """CorpusFile represents a corpus text file from ELAEME."""
 
-    def __init__(self, name: str, web_contents: WebContents) -> None:
+    def __init__(self, name: str, contents: Contents) -> None:
         self.name = name
-        self.web_contents = web_contents
-
-    @property
-    def ok(self) -> bool:
-        return self.web_contents.ok
+        self.contents = contents
 
     @property
     def text(self) -> str:
-        return self.web_contents.text
+        return self.contents.text
 
     def as_io(self) -> io.StringIO:
-        return io.StringIO(self.web_contents.text)
+        return io.StringIO(self.contents.text)
 
     @property
     def type(self) -> FileType:
@@ -258,14 +253,33 @@ class CorpusFile(Saver):
             fout.write(self.text)
 
 
-@dataclass
-class WebContents:
-    text: str
-    status_code: int
+class Contents(ABC):
+    def __init__(self, text: str) -> None:
+        self._text = text
+
+    @abstractproperty
+    def text(self) -> str:
+        return self._text
+
+
+class WebContents(Contents):
+    def __init__(self, text: str, status_code: int) -> None:
+        self.status_code = status_code
+        super().__init__(text=text)
+
+    @property
+    def text(self) -> str:
+        return self._text
 
     @property
     def ok(self) -> bool:
         return self.status_code == 200
+
+
+class FileContents(Contents):
+    @property
+    def text(self) -> str:
+        return self._text
 
 
 class Link:

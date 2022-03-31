@@ -221,30 +221,26 @@ def test_corpus_file_type_param():
 
 
 @pytest.mark.parametrize(
-    "case, text, ok",
+    "instance, text",
     [
         (
             download.CorpusFile("", download.WebContents("foo", 403)),
             "foo",
-            False,
         ),
         (
             download.CorpusFile("", download.WebContents("bar", 200)),
             "bar",
-            True,
         ),
         (
             download.CorpusFile("", download.WebContents("baz", 300)),
             "baz",
-            False,
         ),
     ],
 )
 def test_corpus_file_promoted_fields(
-    case: download.CorpusFile, text: str, ok: bool
+    instance: download.CorpusFile, text: str
 ) -> None:
-    assert case.text == text
-    assert case.ok == ok
+    assert instance.text == text
 
 
 def test_corpus_file_saving(mocker) -> None:
@@ -350,3 +346,8 @@ def test_downloader(mocker, web_contents: str) -> None:
 
     downloader = download.Downloader(parser=parser)
     _ = downloader.download()
+
+
+def test_from_dir() -> None:
+    root = "elaeme"
+    d = file.from_root(root)
