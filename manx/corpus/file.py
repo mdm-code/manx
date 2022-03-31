@@ -3,18 +3,16 @@
 # Standard library imports
 from __future__ import annotations
 import enum
+from functools import wraps
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Callable
 
 # Local library imports
 from .download import FileContents, CorpusFile
 
-if TYPE_CHECKING:
-    from .download import Saver
 
-
-__all__ = ["Dir", "DirName", "traverse"]
+__all__ = ["Dir", "DirName", "files", "from_root", "traverse"]
 
 
 class DirName(str, enum.Enum):
@@ -35,11 +33,11 @@ class Dir:
     """Dir represents a directory node in the file system."""
 
     def __init__(
-        self, name: str, files: list[Saver], parent: Dir | None = None
+        self, name: str, files: list[CorpusFile], parent: Dir | None = None
     ) -> None:
         self.name = name
         self.parent = parent
-        self.files: list[Saver] = files
+        self.files: list[CorpusFile] = files
         self.children: list[Dir] = []
 
     @property
@@ -65,10 +63,23 @@ class Dir:
         return other
 
 
+def files(func: Callable[[str], Dir]) -> Callable[[str], list[CorpusFile]]:
+    @wraps(func)
+    def wrapped(*args: str, **kwargs: str):
+        d = func(*args, **kwargs)
+        result: list[CorpusFile] = []
+        for subdir in d.children:
+            result.extend(subdir.files)
+        return result
+
+    return wrapped
+
+
+@files
 def from_root(root: str) -> Dir:
     """from_root reconstructs the corpus directory structure in memory."""
     if not os.path.isdir(root):
-        raise Exception
+        raise ValueError
 
     directory = Dir(root, files=[])
 
