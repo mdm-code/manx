@@ -2,9 +2,8 @@
 
 # Standard library imports
 from __future__ import annotations
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 import asyncio
-from dataclasses import dataclass
 import enum
 import httpx
 import io
@@ -186,15 +185,15 @@ class Downloader:
 
     async def read_website_contents(
         self, url: str, client: httpx.AsyncClient
-    ) -> Contents:
+    ) -> WebContents:
         async with httpx.AsyncClient() as client:
             response = await client.get(url)
             contents = response.read().decode("UTF-8")
             try:
                 response.raise_for_status()
             except httpx.HTTPStatusError:
-                return Contents("", response.status_code)
-        return Contents(contents, response.status_code)
+                return WebContents("", response.status_code)
+        return WebContents(contents, response.status_code)
 
 
 class FileType(enum.Enum):
@@ -217,10 +216,6 @@ class CorpusFile(Saver):
     def __init__(self, name: str, contents: Contents) -> None:
         self.name = name
         self.contents = contents
-
-    @property
-    def ok(self) -> bool:
-        return self.contents.ok
 
     @property
     def text(self) -> str:
@@ -258,14 +253,33 @@ class CorpusFile(Saver):
             fout.write(self.text)
 
 
-@dataclass
-class Contents:
-    text: str
-    status_code: int
+class Contents(ABC):
+    def __init__(self, text: str) -> None:
+        self._text = text
+
+    @abstractproperty
+    def text(self) -> str:
+        return self._text
+
+
+class WebContents(Contents):
+    def __init__(self, text: str, status_code: int) -> None:
+        self.status_code = status_code
+        super().__init__(text=text)
+
+    @property
+    def text(self) -> str:
+        return self._text
 
     @property
     def ok(self) -> bool:
         return self.status_code == 200
+
+
+class FileContents(Contents):
+    @property
+    def text(self) -> str:
+        return self._text
 
 
 class Link:
