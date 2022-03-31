@@ -44,11 +44,11 @@ def main():
             files = downloader.download(args.verbose)
             root = corpus.Dir(args.root, files=[])
             root / corpus.Dir(
-                "dicts",
+                corpus.DirName.dicts.value,
                 files=[f for f in files if f.type == corpus.FileType.Dict],
             )
             root / corpus.Dir(
-                "texts",
+                corpus.DirName.texts.value,
                 files=[f for f in files if f.type == corpus.FileType.Text],
             )
             corpus.traverse(root)
@@ -56,14 +56,14 @@ def main():
             if args.from_web:
                 downloader = corpus.Downloader()
                 files = downloader.download(args.verbose)
-                texts = [
-                    f.as_io() for f in files if f.type == corpus.FileType.Dict
-                ]
-                p = parsing.DictParser()
-                parsed = [list(p.parse(t)) for t in texts]
             else:
-                print("parsing file from file system")
-                parser.exit(0)
+                files = corpus.from_root(args.root)
+            texts = [
+                f.as_io() for f in files if f.type == corpus.FileType.Dict
+            ]
+            p = parsing.DictParser()
+            _ = [list(p.parse(t)) for t in texts]
+            print(_[:10])
 
 
 if __name__ == "__main__":
