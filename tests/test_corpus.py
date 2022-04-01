@@ -348,6 +348,32 @@ def test_downloader(mocker, web_contents: str) -> None:
     _ = downloader.download()
 
 
-def test_from_dir() -> None:
-    root = "elaeme"
-    d = file.from_root(root)
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        ("texts", True),
+        ("dicts", True),
+        ("tags",  False),
+        ("htmls", False),
+    ]
+)
+def test_validate_dir_name(instance: str, want: bool) -> None:
+    has = file.DirName.is_valid(instance)
+    assert has == want
+
+
+def test_files_works_on_empty_dir() -> None:
+
+    def _mock_func(*_) -> file.Dir:
+        d = file.Dir("temp", files=[])
+        d / file.Dir("subdir1", files=[])
+        d / file.Dir("subdir2", files=[])
+        return d
+
+    func = file.files(_mock_func)
+    has = func("foo")
+    assert len(has) == 0
+
+
+def test_dir_obj_from_root() -> None:
+    pass
