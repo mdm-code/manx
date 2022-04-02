@@ -12,7 +12,7 @@ from typing import Callable
 from .download import FileContents, CorpusFile
 
 
-__all__ = ["Dir", "DirName", "files", "from_root", "traverse"]
+__all__ = ["Dir", "DirName", "from_root", "traverse"]
 
 
 class DirName(str, enum.Enum):

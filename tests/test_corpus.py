@@ -3,6 +3,7 @@
 # Standard library imports
 from dataclasses import dataclass
 from io import BytesIO
+from unittest import mock
 
 # Third-party library imports
 import pytest
@@ -376,4 +377,18 @@ def test_files_works_on_empty_dir() -> None:
 
 
 def test_dir_obj_from_root() -> None:
-    pass
+    with (
+        mock.patch("os.path.isdir") as misdir,
+        mock.patch("os.listdir") as mlsdir,
+        mock.patch("pathlib.Path.is_dir") as mpisdir,
+        mock.patch("pathlib.Path.is_file") as mpisfile,
+        mock.patch(
+            "builtins.open", mock.mock_open(read_data=""), create=False
+        ) as _,
+    ):
+        misdir.return_value = True
+        mpisdir.return_value = True
+        mpisfile.return_value = True
+        mlsdir.return_value = ["texts", "dicts"]
+
+        _ = file.from_root("root")
