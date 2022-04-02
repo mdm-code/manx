@@ -15,58 +15,20 @@ __all__ = [
 
 DICT_SEP = "|"
 
+N_FIELDS = 5
+
 
 class ParsingError(Exception):
     ...
 
 
-@dataclass(frozen=True, eq=False)
+@dataclass(frozen=True, slots=True)
 class DictLine:
-    _text_id: str | int
-    _lexel: str
-    _grammel: str
-    _form: str
-    _count: str | int
-
-    @property
-    def text_id(self) -> int:
-        return int(self._text_id)
-
-    @property
-    def count(self) -> int:
-        return int(self._count)
-
-    @property
-    def lexel(self) -> str:
-        return self._strip(self._lexel)
-
-    @property
-    def grammel(self) -> str:
-        return self._strip(self._grammel)
-
-    @property
-    def form(self) -> str:
-        return self._strip(self._form)
-
-    @property
-    def __dict__(self) -> dict[str, Any]:  # type: ignore
-        return {
-            "text_id": self.text_id,
-            "lexel": self.lexel,
-            "grammel": self.grammel,
-            "form": self.form,
-            "count": self.count,
-        }
-
-    def __eq__(self: DictLine, other: object) -> bool:
-        if not isinstance(other, type(self)):
-            return False
-        if self.__dict__ == other.__dict__:
-            return True
-        return False
-
-    def _strip(self, s: str) -> str:
-        return s.strip("'")
+    text_id: int
+    lexel: str
+    grammel: str
+    form: str
+    count: int
 
 
 class Parser(ABC):
@@ -76,8 +38,9 @@ class Parser(ABC):
 
 
 class DictParser(Parser):
-    def __init__(self, sep: str = DICT_SEP) -> None:
+    def __init__(self, sep: str = DICT_SEP, n_fields: int = N_FIELDS) -> None:
         self.sep = sep
+        self.n_fields = n_fields
 
     def parse(self, fp: TextIO) -> Generator[DictLine, None, None]:
         for line in fp:
@@ -85,8 +48,21 @@ class DictParser(Parser):
 
     def _parse(self, line: str) -> DictLine:
         fields = [f for f in line.strip().split(self.sep) if f]
+
+        if (l := len(fields)) != self.n_fields:
+            raise ParsingError(f"expected {self.n_fields}; got {l}")
+
+        def _strip(field: str) -> str:
+            return field.strip("'")
+
         try:
-            result = DictLine(*fields)
-        except TypeError:
+            result = DictLine(
+                text_id=int(fields[0]),
+                lexel=_strip(fields[1]),
+                grammel=_strip(fields[2]),
+                form=_strip(fields[3]),
+                count=int(fields[4]),
+            )
+        except (TypeError, ValueError):
             raise ParsingError(f"unable to parse: {line}")
         return result
