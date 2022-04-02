@@ -3,6 +3,7 @@
 # Standard library imports
 from dataclasses import dataclass
 from io import BytesIO
+from unittest import mock
 
 # Third-party library imports
 import pytest
@@ -348,6 +349,46 @@ def test_downloader(mocker, web_contents: str) -> None:
     _ = downloader.download()
 
 
-def test_from_dir() -> None:
-    root = "elaeme"
-    d = file.from_root(root)
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        ("texts", True),
+        ("dicts", True),
+        ("tags",  False),
+        ("htmls", False),
+    ]
+)
+def test_validate_dir_name(instance: str, want: bool) -> None:
+    has = file.DirName.is_valid(instance)
+    assert has == want
+
+
+def test_files_works_on_empty_dir() -> None:
+
+    def _mock_func(*_) -> file.Dir:
+        d = file.Dir("temp", files=[])
+        d / file.Dir("subdir1", files=[])
+        d / file.Dir("subdir2", files=[])
+        return d
+
+    func = file.files(_mock_func)
+    has = func("foo")
+    assert len(has) == 0
+
+
+def test_dir_obj_from_root() -> None:
+    with (
+        mock.patch("os.path.isdir") as misdir,
+        mock.patch("os.listdir") as mlsdir,
+        mock.patch("pathlib.Path.is_dir") as mpisdir,
+        mock.patch("pathlib.Path.is_file") as mpisfile,
+        mock.patch(
+            "builtins.open", mock.mock_open(read_data=""), create=False
+        ) as _,
+    ):
+        misdir.return_value = True
+        mpisdir.return_value = True
+        mpisfile.return_value = True
+        mlsdir.return_value = ["texts", "dicts"]
+
+        _ = file.from_root("root")
