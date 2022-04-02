@@ -2,8 +2,9 @@
 
 # Standard library imports
 from __future__ import annotations
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 import asyncio
+from dataclasses import dataclass
 import enum
 import httpx
 import io
@@ -204,16 +205,12 @@ class FileType(enum.Enum):
     Tags = 4
 
 
-class Saver(ABC):
-    @abstractmethod
-    def save(self, node: Dir) -> None:
-        pass
-
-
-class CorpusFile(Saver):
+class CorpusFile:
     """CorpusFile represents a corpus text file from ELAEME."""
 
-    def __init__(self, name: str, contents: Contents) -> None:
+    def __init__(
+        self, name: str, contents: WebContents | FileContents
+    ) -> None:
         self.name = name
         self.contents = contents
 
@@ -253,33 +250,19 @@ class CorpusFile(Saver):
             fout.write(self.text)
 
 
-class Contents(ABC):
-    def __init__(self, text: str) -> None:
-        self._text = text
-
-    @abstractproperty
-    def text(self) -> str:
-        return self._text
-
-
-class WebContents(Contents):
-    def __init__(self, text: str, status_code: int) -> None:
-        self.status_code = status_code
-        super().__init__(text=text)
-
-    @property
-    def text(self) -> str:
-        return self._text
+@dataclass(slots=True, frozen=True)
+class WebContents:
+    text: str
+    status_code: int
 
     @property
     def ok(self) -> bool:
         return self.status_code == 200
 
 
-class FileContents(Contents):
-    @property
-    def text(self) -> str:
-        return self._text
+@dataclass(slots=True, frozen=True)
+class FileContents:
+    text: str
 
 
 class Link:

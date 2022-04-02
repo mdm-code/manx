@@ -61,6 +61,7 @@ def test_parse_single_dict_line(instance: str, want: parsers.DictLine) -> None:
         "",
         "|167|&|cj||12||",
         ",177,'&','cj','AN',3,,",
+        "|seven|'&'|'cj'|'AN'|3||",
     ]
 )
 def test_parse_raises_parsing_error(instance: str) -> None:
