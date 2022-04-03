@@ -7,8 +7,7 @@ from io import StringIO
 import pytest
 
 # Local library imports
-from manx.parsing import parsers
-from manx.parsing import text
+from manx.parsing import dicts, texts
 
 
 @pytest.fixture
@@ -56,28 +55,28 @@ def text_file_sample() -> StringIO:
     [
         (
             "|68|'witannot'|'vps21-apn'|'NITE'|2||",
-            parsers.DictLine(68, "witannot", "vps21-apn", "NITE", 2)
+            dicts.DictLine(68, "witannot", "vps21-apn", "NITE", 2)
         ),
         (
             "|144|''|'neg-v(>av)'|'NE'|1||",
-            parsers.DictLine(144, "", "neg-v(>av)", "NE", 1)
+            dicts.DictLine(144, "", "neg-v(>av)", "NE", 1)
         ),
         (
             "|144|'ewe'|'n'|'*AWE'|1||",
-            parsers.DictLine(144, "ewe", "n", "*AWE", 1)
+            dicts.DictLine(144, "ewe", "n", "*AWE", 1)
         ),
         (
             "|144|''|'P12N'|'yU'|2||",
-            parsers.DictLine(144, "", "P12N", "yU", 2)
+            dicts.DictLine(144, "", "P12N", "yU", 2)
         ),
         (
             "|177|'&'|'cj'|'AN'|3||",
-            parsers.DictLine(177, "&", "cj", "AN", 3)
+            dicts.DictLine(177, "&", "cj", "AN", 3)
         ),
     ]
 )
-def test_parse_single_dict_line(instance: str, want: parsers.DictLine) -> None:
-    func = parsers.DictParser()._parse
+def test_parse_single_dict_line(instance: str, want: dicts.DictLine) -> None:
+    func = dicts.DictParser()._parse
     have = func(instance)
     assert have == want
 
@@ -92,13 +91,13 @@ def test_parse_single_dict_line(instance: str, want: parsers.DictLine) -> None:
     ]
 )
 def test_parse_raises_parsing_error(instance: str) -> None:
-    with pytest.raises(parsers.ParsingError):
-        func = parsers.DictParser()._parse
+    with pytest.raises(dicts.ParsingError):
+        func = dicts.DictParser()._parse
         func(instance)
 
 
 def test_dict_parser(dict_file_sample: StringIO) -> None:
-    parser: parsers.Parser = parsers.DictParser()
+    parser: dicts.Parser = dicts.DictParser()
     result = parser.parse(dict_file_sample)
     assert len(list(result)) == 8
 
@@ -106,7 +105,7 @@ def test_dict_parser(dict_file_sample: StringIO) -> None:
 @pytest.mark.parametrize("n_chars", [5, 10, 0])
 def test_reader_peek(text_file_sample: StringIO, n_chars: int) -> None:
     """Test if the peek() method does not advance the cursor."""
-    reader = text.Reader(text_file_sample)
+    reader = texts.Reader(text_file_sample)
     prev = reader._file.tell()
     reader.peek(n_chars)
     assert prev == reader.tell() == 0
@@ -115,7 +114,7 @@ def test_reader_peek(text_file_sample: StringIO, n_chars: int) -> None:
 @pytest.mark.parametrize("n_chars", [10, 20, 300])
 def test_reader_consume(text_file_sample: StringIO, n_chars: int) -> None:
     """Assert that consume advances the file cursor."""
-    reader = text.Reader(text_file_sample)
+    reader = texts.Reader(text_file_sample)
     prev = reader._file.tell()
     reader.consume(n_chars)
     assert reader._file.tell() == prev + n_chars
@@ -132,7 +131,7 @@ def test_reader_is_eof(
     text_file_sample: StringIO, n_chars: int, want: bool
 ) -> None:
     """Test if the EOF is True when the cursor's at the end of the file."""
-    reader = text.Reader(text_file_sample)
+    reader = texts.Reader(text_file_sample)
     reader._file.read(n_chars)
     have = reader.is_EOF()
     assert have == want

@@ -5,6 +5,9 @@ from contextlib import contextmanager
 from typing import Generator, TextIO
 
 
+__all__ = ["Reader"]
+
+
 class Reader:
     def __init__(self, file: TextIO) -> None:
         self._file = file
