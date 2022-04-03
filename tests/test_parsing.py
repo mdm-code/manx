@@ -103,7 +103,36 @@ def test_dict_parser(dict_file_sample: StringIO) -> None:
     assert len(list(result)) == 8
 
 
-def test_character_reader(text_file_sample) -> None:
+@pytest.mark.parametrize("n_chars", [5, 10, 0])
+def test_reader_peek(text_file_sample: StringIO, n_chars: int) -> None:
+    """Test if the peek() method does not advance the cursor."""
     reader = text.Reader(text_file_sample)
-    result = reader.peek(6)
-    assert result == list("# 163\n")
+    prev = reader._file.tell()
+    reader.peek(n_chars)
+    assert prev == reader.tell() == 0
+
+
+@pytest.mark.parametrize("n_chars", [10, 20, 300])
+def test_reader_consume(text_file_sample: StringIO, n_chars: int) -> None:
+    """Assert that consume advances the file cursor."""
+    reader = text.Reader(text_file_sample)
+    prev = reader._file.tell()
+    reader.consume(n_chars)
+    assert reader._file.tell() == prev + n_chars
+
+
+@pytest.mark.parametrize(
+    "n_chars, want",
+    [
+        (5, False),
+        (100_000_000, True),
+    ]
+)
+def test_reader_is_eof(
+    text_file_sample: StringIO, n_chars: int, want: bool
+) -> None:
+    """Test if the EOF is True when the cursor's at the end of the file."""
+    reader = text.Reader(text_file_sample)
+    reader._file.read(n_chars)
+    have = reader.is_EOF()
+    assert have == want

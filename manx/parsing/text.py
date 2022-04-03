@@ -1,34 +1,39 @@
 """Text contains the text material parser."""
 
 # Standard library imports
-from typing import TextIO
+from contextlib import contextmanager
+from typing import Generator, TextIO
 
 
-# TODO: Create a Tokenizer class iterating over an open file buffer
-# TODO: peek/consume could emit list[str] with N steps
-# TODO: remember about .seek(X) method on opened TextIO (and StringIO)
 class Reader:
     def __init__(self, file: TextIO) -> None:
-        self.file = file
+        self._file = file
 
     def peek(self, k: int = 1) -> list[str]:
-        result: list[str] = []
+        with seek_back(self._file) as revertable_f:
+            return list(revertable_f.read(k))
 
-        # TODO: Turn it into a context manager
-        prev = self.file.tell()
-
-        for c in self.file.read(k):
-            result.append(c)
-
-        self.file.seek(prev)
-
+    def consume(self, k: int) -> list[str]:
+        result = list(self._file.read(k))
         return result
 
-    def consume(self, _: int) -> None:
-        raise NotImplementedError
+    def is_EOF(self) -> bool:
+        with seek_back(self._file) as revertable_f:
+            if revertable_f.read(1) == "":
+                return True
+            return False
 
-    def isEOF(self) -> None:
-        raise NotImplementedError
+    def tell(self) -> int:
+        return self._file.tell()
+
+
+@contextmanager
+def seek_back(file: TextIO) -> Generator[TextIO, None, None]:
+    prev = file.tell()
+    try:
+        yield file
+    finally:
+        file.seek(prev)
 
 
 # TODO: Should handle whitespace and comments
@@ -44,5 +49,5 @@ class Lexer:
     def consume(self, _: int) -> None:
         raise NotImplementedError
 
-    def isEOF(self) -> None:
+    def is_EOF(self) -> None:
         raise NotImplementedError
