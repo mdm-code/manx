@@ -135,3 +135,13 @@ def test_reader_is_eof(
     reader._file.read(n_chars)
     have = reader.is_EOF()
     assert have == want
+
+
+def test_tmp() -> None:
+    text = StringIO("hello world\nfoo bar baz")
+    want = ("hello world\nfoo bar baz").split()
+    reader = texts.Reader(text)
+    lexer = texts.Lexer(reader)
+    for word in want:
+        assert lexer.consume() == word
+    assert lexer.consume() == "EOF"
