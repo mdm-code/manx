@@ -8,6 +8,7 @@ import pytest
 
 # Local library imports
 from manx.parsing import parsers
+from manx.parsing import text
 
 
 @pytest.fixture
@@ -21,6 +22,32 @@ def dict_file_sample() -> StringIO:
         "|163|'dead'|'aj'|'DEYD~'|1||\n"
         "|163|'death'|'n'|'DET'|1||\n"
         "|163|'do'|'vps23'|'DOy'|1||\n"
+    )
+
+
+@pytest.fixture()
+def text_file_sample() -> StringIO:
+    return StringIO(
+        "# 163\n"
+        "{Aberdeen University Library 154, fol. 368v: couplet and 3 quatrains}\n"
+        "C13b2-C14a1\n"
+        "378 159 N\n"
+        "\n\n"
+        "{=NE Somerset=}\n"
+        "{=Sample represents all the text in English in this hand=}\n"
+        "{=Script - semi-cursive Anglicana=}\n"
+        "{=Status - MS punctuation done; tagging notes and textual notes up to date=}\n"
+        "{~f368v~}\n"
+        "{=last folio of MS, containing a couplet in English, some Latin notes and three separate quatrains in English, each having its four lines linked with braces=} {para}YORE WAS A LONDE {.} WRATHE {.} AND *HATE {.} AN HONDE {.} {\\} {=10 lines of Latin=} {para}WANE yE NIyIG HIS DEYD~ {=Stroke through the loop of the back of D=} ME BURIICTH HIM COVE {\\}\n"
+        "*COMEZ yE yUNGE STRUPLING AND WOCTH IS LOUE {\\}\n"
+        "*HE DRINKET OF HIS GOD ALE AN HET OF HIS LOWE {\\}\n"
+        "*AN SINGEZ FOR HIS SOULE GIUELE-GOUE {.} {\\} {para}WAYLAWAY NU HIS ME VO {.} N>O>U ROTYE IHC {=MS ICHC with first C subpuncted=} HUNDER MOLD~ {\\}\n"
+        "*MI FRENDES LOUE IS AL AGO {.} FOR DET NE HAUET NO HOLD~ {\"loyalty, allegiance\"} {\\}\n"
+        "*HEO BET MINE MESTE FON {.} yAT ME LOUIE SSOLD~ {\\}\n"
+        "*HE DRAHET HEM TO {.} AN DOy ME FRO {.} yAT IC [][P]END~ {=first letter lost and second partially lost because of a wormhole=} NOLD~ {\\} {para}*HWO-SO HIM BI-yOUHTE YN-WARD-LICHE AN HO[F]TE {=F partly lost because of a wormhole=} {\\}\n"
+        "*HOU HARD IS yE WORE FRUOM BED~ TO y[] {=letter lost in wormhole=} FLORE {\\}\n"
+        "*FRr^OUM {=i.e. both R and superscript O which usual implies also preceding <r>=} FLORE TO VULUTTE {=i.e. journey from life to death=} FROM VLUTTE TO PUTTE {\\}\n"
+        "*NE SOLDE NEUERE SOENNE MANNES HERTE A-WYNNE {\\}\n"
     )
 
 
@@ -74,3 +101,9 @@ def test_dict_parser(dict_file_sample: StringIO) -> None:
     parser: parsers.Parser = parsers.DictParser()
     result = parser.parse(dict_file_sample)
     assert len(list(result)) == 8
+
+
+def test_character_reader(text_file_sample) -> None:
+    reader = text.Reader(text_file_sample)
+    result = reader.peek(6)
+    assert result == list("# 163\n")
