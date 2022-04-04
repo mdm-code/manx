@@ -2,6 +2,8 @@
 
 # Standard library imports
 from contextlib import contextmanager
+from dataclasses import dataclass
+import enum
 from typing import Callable, Generator, TextIO
 
 
@@ -44,35 +46,48 @@ def seek_back(file: TextIO | Reader) -> Generator[TextIO | Reader, None, None]:
         file.seek(prev)
 
 
+@enum.unique
+class T(enum.Enum):
+    EOF = 0
+    REGULAR = 1
+    BRACKET = 2
+
+
+@dataclass(frozen=True, slots=True)
+class Token:
+    text: str
+    type: T
+
+
 class Lexer:
     def __init__(self, reader: Reader) -> None:
         self._reader = reader
         self._states: dict[str, Callable] = {"default": self.default}
         self.func = self.default
 
-    def next_token(self) -> str:
+    def next_token(self) -> Token:
         return self.func()
 
-    def default(self) -> str:
-        token = ""
+    def default(self) -> Token:
+        text = ""
         n = 1
         ws = {"\n", " "}
 
         if self._reader.is_EOF():
-            return "EOF"
+            return Token(text, T.EOF)
 
         while not self._reader.is_EOF() and self._reader.peek(n) not in ws:
-            token = token + self._reader.consume(n)
+            text = text + self._reader.consume(n)
         else:
             while not self._reader.is_EOF() and self._reader.peek(n) in ws:
                 self._reader.consume(n)
-        return token
+        return Token(text, T.REGULAR)
 
-    def peek(self) -> str:
+    def peek(self) -> Token:
         with seek_back(self._reader) as _:
             return self.next_token()
 
-    def consume(self) -> str:
+    def consume(self) -> Token:
         return self.next_token()
 
     def is_EOF(self) -> bool:

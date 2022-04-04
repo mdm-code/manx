@@ -143,5 +143,5 @@ def test_tmp() -> None:
     reader = texts.Reader(text)
     lexer = texts.Lexer(reader)
     for word in want:
-        assert lexer.consume() == word
-    assert lexer.consume() == "EOF"
+        assert lexer.consume() == texts.Token(word, texts.T.REGULAR)
+    assert lexer.consume() == texts.Token("", texts.T.EOF)
