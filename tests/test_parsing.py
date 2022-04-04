@@ -31,7 +31,7 @@ def text_file_sample() -> StringIO:
         "{Aberdeen University Library 154, fol. 368v: couplet and 3 quatrains}\n"
         "C13b2-C14a1\n"
         "378 159 N\n"
-        "\n\n"
+        "\n"
         "{=NE Somerset=}\n"
         "{=Sample represents all the text in English in this hand=}\n"
         "{=Script - semi-cursive Anglicana=}\n"
@@ -137,11 +137,27 @@ def test_reader_is_eof(
     assert have == want
 
 
-def test_tmp() -> None:
+def test_lexer_output() -> None:
     text = StringIO("hello world\nfoo bar baz")
-    want = ("hello world\nfoo bar baz").split()
+    want = [
+        texts.Token("hello", texts.T.REGULAR),
+        texts.Token(" ", texts.T.WHITESPACE),
+        texts.Token("world", texts.T.REGULAR),
+        texts.Token("\n", texts.T.WHITESPACE),
+        texts.Token("foo", texts.T.REGULAR),
+        texts.Token(" ", texts.T.WHITESPACE),
+        texts.Token("bar", texts.T.REGULAR),
+        texts.Token(" ", texts.T.WHITESPACE),
+        texts.Token("baz", texts.T.REGULAR),
+        texts.Token("", texts.T.EOF),
+    ]
     reader = texts.Reader(text)
     lexer = texts.Lexer(reader)
     for word in want:
-        assert lexer.consume() == texts.Token(word, texts.T.REGULAR)
-    assert lexer.consume() == texts.Token("", texts.T.EOF)
+        assert lexer.consume() == word
+
+
+def test_preamble_skipping(text_file_sample: StringIO) -> None:
+    reader = texts.TextReader(text_file_sample, skip_preamble=True)
+    lexer = texts.Lexer(reader)
+    assert lexer.next_token() == texts.Token("{=NE", texts.T.REGULAR)
