@@ -18,6 +18,7 @@ __all__ = ["Dir", "DirName", "from_root", "traverse"]
 class DirName(str, enum.Enum):
     texts = "texts"
     dicts = "dicts"
+    tags = "tags"
 
     @classmethod
     @property
