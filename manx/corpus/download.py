@@ -43,7 +43,7 @@ IGNORED_ELALME_FILES = [
     # NOTE: these two are empty text file
     # NOTE: there are no mysql file for them
     "digbysiritht.txt",
-    "digbysiritht.txt",
+    "digbysiritht.tag",
     # NOTE: these files are forbidden
     "all_laeme_data.txt",
     "test.tag",
