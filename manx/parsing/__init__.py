@@ -1,6 +1,6 @@
 """Parsing module handles ELALME file parsing."""
 
 # Local library imports
-from .parsers import *
+from .dicts import *
 
-__all__ = parsers.__all__  # type: ignore
+__all__ = dicts.__all__  # type: ignore

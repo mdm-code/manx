@@ -32,16 +32,21 @@ __all__ = [
 
 ELAEME_DATA_URL = "http://www.lel.ed.ac.uk/ihd/laeme2/tagged_data/"
 
-ELALME_FILE_EXTS = [".txt"]
+ELALME_FILE_EXTS = [".txt", ".tag"]
 
 IGNORED_ELALME_FILES = [
-    # NOTE: these two files contain file names only
+    # NOTE: these four files contain file names only
     "filelist.txt",
+    "filelist.tag",
     "filelist_base.txt",
-    # NOTE: this is an empty text file; there is no mysql file for it
+    "filelist_base.tag",
+    # NOTE: these two are empty text file
+    # NOTE: there are no mysql file for them
     "digbysiritht.txt",
-    # NOTE: this file is forbidden
+    "digbysiritht.tag",
+    # NOTE: these files are forbidden
     "all_laeme_data.txt",
+    "test.tag",
 ]
 
 
