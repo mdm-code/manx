@@ -51,6 +51,10 @@ def main():
                 corpus.DirName.texts.value,
                 files=[f for f in files if f.type == corpus.FileType.Text],
             )
+            root / corpus.Dir(
+                corpus.DirName.tags.value,
+                files=[f for f in files if f.type == corpus.FileType.Tags],
+            )
             corpus.traverse(root)
         case "parse":
             if args.from_web:
