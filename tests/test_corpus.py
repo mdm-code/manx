@@ -83,7 +83,7 @@ def parents() -> file.Dir:
 @pytest.mark.parametrize(
     "text, expected",
     [
-        ("arundel248t.tag", False),
+        ("arundel248t.tag", True),
         ("ashmole360t.txt", True),
         ("bestiaryt_mysql.txt", True),
         ("worcthfragst.html", False),
@@ -99,14 +99,14 @@ def test_filter_elaeme(text: str, expected: bool) -> None:
 def test_link_parser(web_contents) -> None:
     parser = download.LinkParser(filters=[download.ELALMEFileFilter()])
     have = parser.parse(web_contents)
-    assert len(have) == 6
+    assert len(have) == 9
 
 
 @pytest.mark.parametrize(
     "filters, text, expected",
     [
         ([download.ELALMEFileFilter()], "worcthcreedt.txt", True),
-        ([download.ELALMEFileFilter()], "worcthfragst.tag", False),
+        ([download.ELALMEFileFilter()], "worcthfragst.tag", True),
         ([download.ELALMEFileFilter()], "worcthcreedt_mysql.txt", True),
         ([download.ELAEMEIgnoredFiles()], "filelist.txt", False),
         ([download.ELAEMEIgnoredFiles()], "filelist_base.txt", False),
@@ -354,7 +354,7 @@ def test_downloader(mocker, web_contents: str) -> None:
     [
         ("texts", True),
         ("dicts", True),
-        ("tags",  False),
+        ("tags",  True),
         ("htmls", False),
     ]
 )
