@@ -10,6 +10,10 @@ from typing import Callable, Generator, TextIO
 __all__ = ["Lexer", "Reader"]
 
 
+class PreambleReadingError(Exception):
+    ...
+
+
 class Reader:
     def __init__(self, file: TextIO) -> None:
         self._file = file
@@ -41,7 +45,9 @@ class TextReader(Reader):
     def __init__(self, file: TextIO, *, skip_preamble: bool = True) -> None:
         """TextReader can skip over the LAEME text file preamble."""
         if skip_preamble:
-            while file.readline() != "\n":
+            while (l := file.readline()) != "\n":
+                if not l:
+                    raise PreambleReadingError("Could not remove preamble")
                 continue
         super().__init__(file)
 
@@ -61,6 +67,7 @@ class T(enum.Enum):
     REGULAR = 1
     BRACKET = 2
     WHITESPACE = 3
+    COMMENT = 4
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,9 +79,10 @@ class Token:
 class Lexer:
     def __init__(self, reader: Reader) -> None:
         self._reader = reader
-        self._states: dict[str, Callable] = {
+        self._states: dict[str, Callable[[], Token]] = {
             "DEFAULT": self.default,
             "WHITESPACE": self.whitespace,
+            "COMMENT": self.comment,
             "EOF": self.eof,
         }
         self.func = self._states["DEFAULT"]
@@ -82,59 +90,85 @@ class Lexer:
     def next_token(self) -> Token:
         return self.func()
 
-    # TODO: Implement comment parsing
     def comment(self) -> Token:
-        return Token("", T.EOF)
+        text = ""
+        while True:
+            if self._reader.is_EOF():
+                self.func = self._states["EOF"]
+                if text:
+                    break
+                return self.func()
+
+            match self._reader.peek():
+                case "}":
+                    text += self._reader.consume()
+                    self.func = self._states["DEFAULT"]
+                    if text:
+                        break
+                    return self.func()
+                case _:
+                    text += self._reader.consume()
+        return Token(text=text, type=T.COMMENT)
 
     def eof(self) -> Token:
         return Token("", T.EOF)
 
     def whitespace(self) -> Token:
         text = ""
-
         while True:
             if self._reader.is_EOF():
                 self.func = self._states["EOF"]
                 if text:
-                    return Token(text, T.REGULAR)
-                return Token(text, T.EOF)
+                    break
+                return self.func()
 
             match self._reader.peek():
                 case " " | "\n":
                     text += self._reader.consume()
-                # case "{":
-                #     continue
+                case "{":
+                    self.func = self._states["COMMENT"]
+                    if text:
+                        break
+                    return self.func()
                 case _:
                     self.func = self._states["DEFAULT"]
-                    return Token(text=text, type=T.WHITESPACE)
+                    if text:
+                        break
+                    return self.func()
+        return Token(text=text, type=T.WHITESPACE)
 
     def default(self) -> Token:
         text = ""
-
         while True:
             if self._reader.is_EOF():
                 self.func = self._states["EOF"]
                 if text:
-                    return Token(text, T.REGULAR)
-                return Token(text, T.EOF)
+                    break
+                return self.func()
 
             match self._reader.peek():
                 case " " | "\n":
                     self.func = self._states["WHITESPACE"]
-                    return Token(text=text, type=T.REGULAR)
-                # case "{":
-                #     continue
+                    if text:
+                        break
+                    return self.func()
+                case "{":
+                    self.func = self._states["COMMENT"]
+                    if text:
+                        break
+                    return self.func()
                 case _:
                     text = text + self._reader.consume()
+        return Token(text=text, type=T.REGULAR)
 
     def peek(self) -> Token:
-        with seek_back(self._reader) as _:
+        with seek_back(self._reader):
             return self.next_token()
 
     def consume(self) -> Token:
         return self.next_token()
 
     def is_EOF(self) -> bool:
-        if self._reader.is_EOF():
+        if self.peek().type == T.EOF:
             return True
         return False

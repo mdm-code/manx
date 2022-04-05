@@ -1,7 +1,7 @@
 """Tests for parsing module."""
 
 # Standard library imports
-from io import StringIO
+from io import StringIO, SEEK_END, SEEK_CUR
 
 # Third-party library
 import pytest
@@ -137,18 +137,38 @@ def test_reader_is_eof(
     assert have == want
 
 
-def test_lexer_output() -> None:
-    text = StringIO("hello world\nfoo bar baz")
+def test_reader_with_seek_back() -> None:
+    reader = texts.Reader(StringIO(""))
+    with texts.seek_back(reader) as r:
+        r.read()
+
+
+def test_reader_preamble_error() -> None:
+    with pytest.raises(texts.PreambleReadingError):
+        _ = texts.TextReader(StringIO(""))
+
+
+def test_lexer_output_short() -> None:
+    text = StringIO("*COMEZ yE yUNGE STRUPLING AND WOCTH IS LOUE {\\}\n")
     want = [
-        texts.Token("hello", texts.T.REGULAR),
+        texts.Token("*COMEZ", texts.T.REGULAR),
         texts.Token(" ", texts.T.WHITESPACE),
-        texts.Token("world", texts.T.REGULAR),
+        texts.Token("yE", texts.T.REGULAR),
+        texts.Token(" ", texts.T.WHITESPACE),
+        texts.Token("yUNGE", texts.T.REGULAR),
+        texts.Token(" ", texts.T.WHITESPACE),
+        texts.Token("STRUPLING", texts.T.REGULAR),
+        texts.Token(" ", texts.T.WHITESPACE),
+        texts.Token("AND", texts.T.REGULAR),
+        texts.Token(" ", texts.T.WHITESPACE),
+        texts.Token("WOCTH", texts.T.REGULAR),
+        texts.Token(" ", texts.T.WHITESPACE),
+        texts.Token("IS", texts.T.REGULAR),
+        texts.Token(" ", texts.T.WHITESPACE),
+        texts.Token("LOUE", texts.T.REGULAR),
+        texts.Token(" ", texts.T.WHITESPACE),
+        texts.Token("{\\}", texts.T.COMMENT),
         texts.Token("\n", texts.T.WHITESPACE),
-        texts.Token("foo", texts.T.REGULAR),
-        texts.Token(" ", texts.T.WHITESPACE),
-        texts.Token("bar", texts.T.REGULAR),
-        texts.Token(" ", texts.T.WHITESPACE),
-        texts.Token("baz", texts.T.REGULAR),
         texts.Token("", texts.T.EOF),
     ]
     reader = texts.Reader(text)
@@ -157,7 +177,36 @@ def test_lexer_output() -> None:
         assert lexer.consume() == word
 
 
+def test_lexer_unterminated_comment() -> None:
+    reader = texts.Reader(StringIO("{=NE Somerset="))
+    lexer = texts.Lexer(reader)
+    assert lexer.next_token() == texts.Token("{=NE Somerset=", texts.T.COMMENT)
+
+
+def test_lexer_full_text_pass(text_file_sample: StringIO) -> None:
+    reader = texts.TextReader(text_file_sample)
+    lexer = texts.Lexer(reader)
+    while lexer.next_token().type != texts.T.EOF:
+        pass
+
+
 def test_preamble_skipping(text_file_sample: StringIO) -> None:
     reader = texts.TextReader(text_file_sample, skip_preamble=True)
     lexer = texts.Lexer(reader)
-    assert lexer.next_token() == texts.Token("{=NE", texts.T.REGULAR)
+    assert lexer.next_token() == texts.Token("{=NE Somerset=}", texts.T.COMMENT)
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        (SEEK_END, True),
+        (SEEK_CUR, False),
+    ]
+)
+def test_lexer_is_eof(
+    text_file_sample: StringIO, instance: int, want: bool
+) -> None:
+    reader = texts.TextReader(text_file_sample)
+    lexer = texts.Lexer(reader)
+    reader.seek(0, instance)
+    assert lexer.is_EOF() == want
