@@ -7,7 +7,7 @@ import enum
 from typing import Callable, Generator, TextIO
 
 
-__all__ = ["Lexer", "Reader"]
+__all__ = ["TextParser"]
 
 
 class PreambleReadingError(Exception):
@@ -286,7 +286,7 @@ class Word:
         return True
 
 
-class Parser:
+class TextParser:
     def parse(self, file: TextIO) -> Generator[Word, None, None]:
         """Parse returns a Word object for each word tagged in LAEME."""
         lexer = Lexer(reader=TextReader(file=file, skip_preamble=True))
