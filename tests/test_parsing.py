@@ -144,11 +144,6 @@ def test_reader_with_seek_back() -> None:
         r.read()
 
 
-def test_reader_preamble_error() -> None:
-    with pytest.raises(texts.PreambleReadingError):
-        _ = texts.TextReader(StringIO(""))
-
-
 def test_lexer_output_short() -> None:
     text = StringIO("*COMEZ yE yUNGE STRUPLING AND WOCTH IS LOUE {\\}\n")
     want = [
@@ -411,3 +406,18 @@ def test_word_inequality(instance: Any, want: bool) -> None:
 def test_word_original_token_text() -> None:
     word = texts.Word(texts.Token("BI-yENCH", texts.T.REGULAR))
     assert word.text == "BI-yENCH"
+
+
+def test_preamble_skipping_2() -> None:
+    sample = StringIO(
+        "# 278\n"
+        "{London, British Library,\n"
+        "7-26vb (foot); 27ra line 6 (end): Layamon A}\n"
+        "C13b1\n"
+        "381 271 N {N Worcs=}"
+    )
+    reader = texts.TextReader(sample)
+    lexer = texts.Lexer(reader)
+    assert lexer.consume() == texts.Token(
+        text="{N Worcs=}", type=texts.T.COMMENT
+    )
