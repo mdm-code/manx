@@ -4,6 +4,9 @@
 import argparse
 import sys
 
+# Third-party library imports
+from tqdm import tqdm
+
 # Local library imports
 from manx import corpus, parsing
 
@@ -62,12 +65,27 @@ def main():
                 files = downloader.download(args.verbose)
             else:
                 files = corpus.from_root(args.root)
-            texts = [
+
+            dicts = [
                 f.as_io() for f in files if f.type == corpus.FileType.Dict
             ]
-            p = parsing.DictParser()
-            _ = [list(p.parse(t)) for t in texts]
-            print(_[:10])
+            pd = parsing.DictParser()
+            if args.verbose:
+                pdicts = [list(pd.parse(t)) for t in tqdm(dicts)]
+            else:
+                pdicts = [list(pd.parse(t)) for t in tqdm(dicts)]
+
+            texts = [
+                f.as_io() for f in files if f.type == corpus.FileType.Text
+            ]
+            pt = parsing.TextParser()
+            if args.verbose:
+                ptexts = [list(pt.parse(t)) for t in tqdm(texts)]
+            else:
+                ptexts = [list(pt.parse(t)) for t in texts]
+
+            for word in ptexts[112]:
+                print(word.stripped_text)
 
 
 if __name__ == "__main__":
