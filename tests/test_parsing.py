@@ -2,6 +2,7 @@
 
 # Standard library imports
 from io import StringIO, SEEK_END, SEEK_CUR
+from typing import Any, Callable
 
 # Third-party library
 import pytest
@@ -210,3 +211,203 @@ def test_lexer_is_eof(
     lexer = texts.Lexer(reader)
     reader.seek(0, instance)
     assert lexer.is_EOF() == want
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        (texts.Word(texts.Token("*COMEZ", texts.T.REGULAR)), "COMEZ"),
+        (texts.Word(texts.Token("'yUNGE", texts.T.REGULAR)), "yUNGE"),
+        (texts.Word(texts.Token("STRUP>L>ING", texts.T.REGULAR)), "STRUPLING"),
+        (texts.Word(texts.Token("!WOCTH", texts.T.REGULAR)), "WOCTH"),
+        (texts.Word(texts.Token(";LOUE", texts.T.REGULAR)), "LOUE"),
+        (texts.Word(texts.Token("BI-yENCH", texts.T.REGULAR)), "BIyENCH"),
+        (texts.Word(texts.Token("*I+NE", texts.T.REGULAR)), "INE"),
+        (texts.Word(texts.Token("Tr^OWIS", texts.T.REGULAR)), "TrOWIS"),
+        (texts.Word(texts.Token("HAF\\LES", texts.T.REGULAR)), "HAFLES"),
+        (texts.Word(texts.Token("LI[V]", texts.T.REGULAR)), "LIV"),
+        (texts.Word(texts.Token("ER<y<E", texts.T.REGULAR)), "ERyE"),
+        (texts.Word(texts.Token("Fr^A", texts.T.REGULAR)), "FrA"),
+        (texts.Word(texts.Token("MIvKEL", texts.T.REGULAR)), "MIKEL"),
+        (texts.Word(texts.Token("SUILxK", texts.T.REGULAR)), "SUILK"),
+    ]
+)
+def test_word_stripped_text(instance: texts.Word, want: str) -> None:
+    """Check whether the stripped text matches the expected form."""
+    assert instance.stripped_text == want
+
+
+@pytest.mark.parametrize(
+    "instance, func, want",
+    [
+        (
+            texts.Word(texts.Token("*COMEZ", texts.T.REGULAR)),
+            texts.Word.is_capital,
+            True
+        ),
+        (
+            texts.Word(texts.Token("COMEZ", texts.T.REGULAR)),
+            texts.Word.is_capital,
+            False
+        ),
+        (
+            texts.Word(texts.Token("'yUNGE", texts.T.REGULAR)),
+            texts.Word.is_personal_name,
+            True
+        ),
+        (
+            texts.Word(texts.Token("yUNGE", texts.T.REGULAR)),
+            texts.Word.is_personal_name,
+            False
+        ),
+        (
+            texts.Word(texts.Token("STRUP>L>ING", texts.T.REGULAR)),
+            texts.Word.has_insertions,
+            True
+        ),
+        (
+            texts.Word(texts.Token("STRUPLING", texts.T.REGULAR)),
+            texts.Word.has_insertions,
+            False
+        ),
+        (
+            texts.Word(texts.Token("!WOCTH", texts.T.REGULAR)),
+            texts.Word.is_miscellaneous,
+            True,
+        ),
+        (
+            texts.Word(texts.Token("WOCTH", texts.T.REGULAR)),
+            texts.Word.is_miscellaneous,
+            False,
+        ),
+        (
+            texts.Word(texts.Token(";LOUE", texts.T.REGULAR)),
+            texts.Word.is_place_name,
+            True,
+        ),
+        (
+            texts.Word(texts.Token("LOUE", texts.T.REGULAR)),
+            texts.Word.is_place_name,
+            False,
+        ),
+        (
+            texts.Word(texts.Token("BI-yENCH", texts.T.REGULAR)),
+            texts.Word.has_separator,
+            True,
+        ),
+        (
+            texts.Word(texts.Token("BIyENCH", texts.T.REGULAR)),
+            texts.Word.has_separator,
+            False,
+        ),
+        (
+            texts.Word(texts.Token("*I+NE", texts.T.REGULAR)),
+            texts.Word.has_separator,
+            True,
+        ),
+        (
+            texts.Word(texts.Token("*INE", texts.T.REGULAR)),
+            texts.Word.has_separator,
+            False,
+        ),
+        (
+            texts.Word(texts.Token("Tr^OWIS", texts.T.REGULAR)),
+            texts.Word.has_superscript,
+            True,
+        ),
+        (
+            texts.Word(texts.Token("TrOWIS", texts.T.REGULAR)),
+            texts.Word.has_superscript,
+            False,
+        ),
+        (
+            texts.Word(texts.Token("HAF\\LES", texts.T.REGULAR)),
+            texts.Word.has_line_end,
+            True,
+        ),
+        (
+            texts.Word(texts.Token("HAFLES", texts.T.REGULAR)),
+            texts.Word.has_line_end,
+            False,
+        ),
+        (
+            texts.Word(texts.Token("LI[V]", texts.T.REGULAR)),
+            texts.Word.has_gaps,
+            True,
+        ),
+        (
+            texts.Word(texts.Token("LIV", texts.T.REGULAR)),
+            texts.Word.has_gaps,
+            False,
+        ),
+        (
+            texts.Word(texts.Token("ER<y<E", texts.T.REGULAR)),
+            texts.Word.has_deletion,
+            True,
+        ),
+        (
+            texts.Word(texts.Token("ERyE", texts.T.REGULAR)),
+            texts.Word.has_deletion,
+            False,
+        ),
+        (
+            texts.Word(texts.Token("Fr^A", texts.T.REGULAR)),
+            texts.Word.has_superscript,
+            True
+        ),
+        (
+            texts.Word(texts.Token("FrA", texts.T.REGULAR)),
+            texts.Word.has_superscript,
+            False
+        ),
+        (
+            texts.Word(texts.Token("MIvKEL", texts.T.REGULAR)),
+            texts.Word.has_diacritics,
+            True,
+        ),
+        (
+            texts.Word(texts.Token("MIKEL", texts.T.REGULAR)),
+            texts.Word.has_diacritics,
+            False,
+        ),
+        (
+            texts.Word(texts.Token("SUILxK", texts.T.REGULAR)),
+            texts.Word.has_diacritics,
+            True,
+        ),
+        (
+            texts.Word(texts.Token("SUILK", texts.T.REGULAR)),
+            texts.Word.has_diacritics,
+            False,
+        ),
+    ]
+)
+def test_word_checks(
+    instance: texts.Word, func: Callable[[texts.Word], bool], want: bool
+) -> None:
+    """Check whether the stripped text matches the expected form."""
+    assert func(instance) == want
+
+
+def test_word_equality() -> None:
+    """Words with the equal underlying token are equal."""
+    word_one = texts.Word(texts.Token("BI-yENCH", texts.T.REGULAR))
+    word_two =texts.Word(texts.Token("BI-yENCH", texts.T.REGULAR))
+    assert word_one == word_two
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        (object, False),
+        (texts.Word(texts.Token("&LONGE", texts.T.REGULAR)), False),
+    ]
+)
+def test_word_inequality(instance: Any, want: bool) -> None:
+    ref = texts.Word(texts.Token("TrOWIS", texts.T.REGULAR))
+    assert (ref == instance) == want
+
+
+def test_word_original_token_text() -> None:
+    word = texts.Word(texts.Token("BI-yENCH", texts.T.REGULAR))
+    assert word.text == "BI-yENCH"
