@@ -45,10 +45,30 @@ class TextReader(Reader):
     def __init__(self, file: TextIO, *, skip_preamble: bool = True) -> None:
         """TextReader can skip over the LAEME text file preamble."""
         if skip_preamble:
+            failed = False
             while (l := file.readline()) != "\n":
                 if not l:
-                    raise PreambleReadingError("Could not remove preamble")
-                continue
+                    failed = True
+                    break
+
+            def _skip_over() -> None:
+                """Skip over malformed headers in two files:
+
+                1. layamonAat.txt
+                2. layamonAbt.txt
+                """
+                file.seek(0)
+                for _ in range(4):
+                    file.readline()
+                n = 0
+                with seek_back(file) as rev_f:
+                    while rev_f.read(1) != "{":
+                        n += 1
+                file.read(n)
+
+            if failed:
+                _skip_over()
+
         super().__init__(file)
 
 
