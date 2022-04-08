@@ -170,7 +170,7 @@ class Downloader:
             splits = [all_links[start::n] for start in range(n)]
 
             if verbose:
-                bar = tqdm(total=len(all_links))
+                bar = tqdm(total=len(all_links), desc="Downloading files")
             else:
                 bar = None
 

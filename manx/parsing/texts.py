@@ -10,10 +10,6 @@ from typing import Callable, Generator, TextIO
 __all__ = ["TextParser"]
 
 
-class PreambleReadingError(Exception):
-    ...
-
-
 class Reader:
     def __init__(self, file: TextIO) -> None:
         self._file = file
@@ -307,10 +303,14 @@ class Word:
 
 
 class TextParser:
-    def parse(self, file: TextIO) -> Generator[Word, None, None]:
+    def parse_gen(self, file: TextIO) -> Generator[Word, None, None]:
         """Parse returns a Word object for each word tagged in LAEME."""
         lexer = Lexer(reader=TextReader(file=file, skip_preamble=True))
 
         while (token := lexer.consume()).type != T.EOF:
             if token.type == T.REGULAR:
                 yield Word(token=token)
+
+    def parse(self, file: TextIO) -> list[Word]:
+        """Parse version suitable for multiprocessing."""
+        return list(self.parse_gen(file))
