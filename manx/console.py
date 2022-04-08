@@ -2,13 +2,18 @@
 
 # Standard library imports
 import argparse
+import multiprocessing as mp
 import sys
+from typing import TYPE_CHECKING
 
 # Third-party library imports
 from tqdm import tqdm
 
 # Local library imports
 from manx import corpus, parsing
+
+if TYPE_CHECKING:
+    from manx.parsing.texts import Word
 
 
 def main():
@@ -59,6 +64,7 @@ def main():
                 files=[f for f in files if f.type == corpus.FileType.Tags],
             )
             corpus.traverse(root)
+
         case "parse":
             if args.from_web:
                 downloader = corpus.Downloader()
@@ -70,22 +76,32 @@ def main():
                 f.as_io() for f in files if f.type == corpus.FileType.Dict
             ]
             pd = parsing.DictParser()
-            if args.verbose:
-                pdicts = [list(pd.parse(t)) for t in tqdm(dicts)]
-            else:
-                pdicts = [list(pd.parse(t)) for t in tqdm(dicts)]
 
-            texts = [
-                f.as_io() for f in files if f.type == corpus.FileType.Text
-            ]
-            pt = parsing.TextParser()
             if args.verbose:
-                ptexts = [list(pt.parse(t)) for t in tqdm(texts)]
+                pdicts = [
+                    list(pd.parse(t)) for t in tqdm(
+                        dicts, desc="Parsing dict files",
+                    )
+                ]
             else:
-                ptexts = [list(pt.parse(t)) for t in texts]
+                pdicts = [list(pd.parse(t)) for t in dicts]
 
-            for word in ptexts[112]:
-                print(word.stripped_text)
+            with mp.Pool(mp.cpu_count()) as pool:
+                texts = [
+                    f.as_io() for f in files if f.type == corpus.FileType.Text
+                ]
+                pt = parsing.TextParser()
+
+                if args.verbose:
+                    ptexts: list[list[Word]] = list(
+                        tqdm(
+                            pool.imap_unordered(pt.parse, texts),
+                            total=len(texts),
+                            desc="Parsing text files",
+                        )
+                    )
+                else:
+                    ptexts = pool.map(pt.parse, texts)
 
 
 if __name__ == "__main__":
