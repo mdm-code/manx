@@ -79,8 +79,10 @@ def main():
 
             if args.verbose:
                 pdicts = [
-                    list(pd.parse(t)) for t in tqdm(
-                        dicts, desc="Parsing dict files",
+                    list(pd.parse(t))
+                    for t in tqdm(
+                        dicts,
+                        desc="Parsing dict files",
                     )
                 ]
             else:
