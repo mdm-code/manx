@@ -8,7 +8,7 @@ from typing import Any, Callable
 import pytest
 
 # Local library imports
-from manx.parsing import dicts, texts
+from manx.parsing import dicts, texts, tags
 
 
 @pytest.fixture
@@ -421,3 +421,39 @@ def test_preamble_skipping_2() -> None:
     assert lexer.consume() == texts.Token(
         text="{N Worcs=}", type=texts.T.COMMENT
     )
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        ("{>)(*LIBER *OCTAUUS()>}", False),
+        ("$son/nG_SUN+ES $/Gn_+ES", True),
+        ("$&/cj_&", True),
+        ("'_*IAMES", True),
+        (";_ENGLELOND", True),
+        ("", False),
+        ("Tolkien (1962) are often not visible on the film=}", False),
+        ("# 272", False),
+        ("C13b?", False),
+        ("C13b-14a", False),
+        ("352 275 N", False),
+    ]
+)
+def test_tags_line_valid(instance: str, want: bool) -> None:
+    assert tags.is_valid(instance) == want
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        ("$son/nG_SUN+ES $/Gn_+ES", ["son", "nG", "SUN+ES"]),
+        ("$&/cj_&", ["&", "cj", "&"]),
+        ("$/P21N_wE", ["", "P21N", "wE"]),
+        ("$thank{g}/nOd_yONC", ["thank{g}", "nOd", "yONC"]),
+        ("$be:tan/vpp_I+BET $ge-/xp-vpp_I+", ["be:tan", "vpp", "I+BET"]),
+        ("'_*IAMES", ["", "", "*IAMES"]),
+        (";_ENGLELOND", ["", "", "ENGLELOND"]),
+    ]
+)
+def test_tag_line_parsing(instance: str, want: bool) -> None:
+    assert tags.parse_line(instance) == want
