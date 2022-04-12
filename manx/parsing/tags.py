@@ -2,6 +2,7 @@
 
 # Standard library imports
 from __future__ import annotations
+from abc import ABC, abstractmethod
 import enum
 
 
@@ -45,3 +46,22 @@ def parse_line(line: str) -> list[str]:
             sline = ["", "", line]
         return sline
     raise TagParsingError(f"failed to parse: {line}")
+
+
+class Filter(ABC):
+    def __call__(self, data: str | list[str]) ->  str | list[str]:
+        if isinstance(data, str):
+            return self.process(data)
+        try:
+            iter(data)
+        except TypeError as e:
+            raise e
+        else:
+            return self.process_iter(data)
+
+    @abstractmethod
+    def process(self, _: str) -> str:
+        raise NotImplementedError
+
+    def process_iter(self, itr: list[str]) -> list[str]:
+        return [self.process(t) for t in itr]
