@@ -457,3 +457,79 @@ def test_tags_line_valid(instance: str, want: bool) -> None:
 )
 def test_tag_line_parsing(instance: str, want: bool) -> None:
     assert tags.parse_line(instance) == want
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        ("'_*IAMES", "_*IAMES"),
+        ("$son/nG_SUN+ES $/Gn_+ES", "son/nG_SUN+ES $/Gn_+ES"),
+        ("$be:tan/vpp_I+BET $ge-/xp-vpp_I+", "be:tan/vpp_I+BET $ge-/xp-vpp_I+"),
+    ]
+)
+def test_skip_mark(instance: str, want: str) -> None:
+    has = tags.SkipMark().process(instance)
+    assert has == want
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        ("_*IAMES", "_*IAMES"),
+        ("son/nG_SUN+ES $/Gn_+ES", "son/nG_SUN+ES"),
+        ("be:tan/vpp_I+BET $ge-/xp-vpp_I+", "be:tan/vpp_I+BET"),
+        (["be:tan/vpp_I+BET", "$ge-/xp-vpp_I+"], "be:tan/vpp_I+BET"),
+    ]
+)
+def test_get_first(instance: str, want: str) -> None:
+    has = tags.GetFirst(" ").process(instance)
+    assert has == want
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        ("_*IAMES", ["", "_*IAMES"]),
+        ("son/nG_SUN+ES", ["son", "nG_SUN+ES"]),
+        ("be:tan/vpp_I+BET", ["be:tan", "vpp_I+BET"]),
+        ("/P21N_wE", ["", "P21N_wE"]),
+        ("thank{g}/nOd_yONC", ["thank{g}", "nOd_yONC"]),
+        (["", "P21N_wE"], ["", "P21N_wE"]),
+    ]
+)
+def test_split_line(instance: str, want: str) -> None:
+    has = tags.SplitLine("/").process(instance)
+    assert has == want
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        (["", "_*IAMES"], ["", "", "*IAMES"]),
+        (["son", "nG_SUN+ES"], ["son", "nG", "SUN+ES"]),
+        (["be:tan", "vpp_I+BET"], ["be:tan", "vpp", "I+BET"]),
+        (["", "P21N_wE"], ["", "P21N", "wE"]),
+        (["thank{g}", "nOd_yONC"], ["thank{g}", "nOd", "yONC"]),
+    ]
+)
+def test_as_constituents(instance: list[str], want: list[str]) -> None:
+    has = tags.AsConstituents("_").process(instance)
+    assert has == want
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        ("$son/nG_SUN+ES $/Gn_+ES", ["son", "nG", "SUN+ES"]),
+        ("$&/cj_&", ["&", "cj", "&"]),
+        ("$/P21N_wE", ["", "P21N", "wE"]),
+        ("$thank{g}/nOd_yONC", ["thank{g}", "nOd", "yONC"]),
+        ("$be:tan/vpp_I+BET $ge-/xp-vpp_I+", ["be:tan", "vpp", "I+BET"]),
+        ("'_*IAMES", ["", "", "*IAMES"]),
+        (";_ENGLELOND", ["", "", "ENGLELOND"]),
+    ]
+)
+def test_filter_pipeline(instance: str, want: list[str]) -> None:
+    pipe = tags.Pipeline(tags.filters())
+    has = pipe(instance)
+    assert has == want
