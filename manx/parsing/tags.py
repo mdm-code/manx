@@ -5,10 +5,16 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import enum
 import itertools
-from typing import Iterable, Generator, TypeAlias
+from typing import Iterable, Generator, TextIO, TypeAlias
+
+# Local library imports
+from .blocks import Parser, T, Token, Word
 
 
-EOF = "|"
+__all__ = [
+    "TagLine",
+    "TagParser",
+]
 
 
 Filterable: TypeAlias = str | list[str]
@@ -28,26 +34,84 @@ class Prefix(str, enum.Enum):
     regular = "$"
 
 
-def is_valid(line: str) -> bool:
-    """Valid checks if the line starts with a valid prefix."""
-    try:
-        Prefix(line[0])
-    except (ValueError, IndexError):
-        return False
-    else:
-        return True
+class TagLine:
+    """TagLine represents a single valid line from .TAG corpus file."""
+
+    def __init__(
+        self, prefix: str, lexel: str, grammel: str, form: str
+    ) -> None:
+        self._prefix = prefix
+        # NOTE: Carry over grammel to lexel if there is no lexel
+        self.lexel = lexel if lexel else grammel
+        self.grammel = grammel
+
+        # NOTE: Only ; and ' are used as prefixes, $ is not
+        form = form if prefix == "$" else prefix + form
+        self._form = Word(Token(text=form, type=T.REGULAR))
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            return False
+        try:
+            result = True
+            for attr in {"prefix", "lexel", "grammel", "form"}:
+                if getattr(self, attr) != getattr(other, attr):
+                    result = False
+                    break
+        except AttributeError as e:
+            raise e
+        else:
+            return result
+
+    @property
+    def prefix(self) -> Prefix:
+        return Prefix(self._prefix)
+
+    @property
+    def form(self) -> str:
+        return self._form.text
+
+    @property
+    def stripped_form(self) -> str:
+        return self._form.stripped_text
 
 
-def is_regular(line: str) -> bool:
-    return line[0] == Prefix.regular.value
+class TagParser(Parser):
+    def parse(self, fp: TextIO) -> Generator[TagLine, None, None]:
+        for line in fp:
+            try:
+                line = line.strip()
+                result = self._parse(line)
+            except TagParsingError:
+                continue
+            else:
+                yield result
 
+    def _parse(self, line: str) -> TagLine:
+        if self._is_valid(line):
 
-def parse_line(line: str) -> Filterable:
-    if is_valid(line):
-        pipe = Pipeline(filters=filters())
-        result = pipe(line)
-        return result
-    raise TagParsingError(f"failed to parse: {line}")
+            # NOTE: Handle corpus erroneous annotation
+            if line == ";_FRAN/CE":
+                line = line.replace("/", "\\")
+
+            mark = line[0]
+            pipe = Pipeline(filters=filters())
+            result = pipe(line)
+            result = [mark] + list[str](result)
+            return TagLine(*result)
+        raise TagParsingError(f"unable to parse: {line}")
+
+    def _is_valid(self, line: str) -> bool:
+        """Valid checks if the line starts with a valid prefix."""
+        try:
+            Prefix(line[0])
+        except (ValueError, IndexError):
+            return False
+        else:
+            if line.startswith("'") or line.startswith(";"):
+                if line[1] != "_":
+                    return False
+            return True
 
 
 class Filter(ABC):
@@ -61,6 +125,7 @@ class Filter(ABC):
 
 class SkipMark(Filter):
     "SkipMark skips the first element in a sequence."
+
     def process(self, data: Filterable) -> Filterable:
         return data[1:]
 
@@ -72,6 +137,7 @@ class Splitter(Filter):
 
 class GetFirst(Splitter):
     "GetFirst gets the first element from a sequence."
+
     def process(self, line: Filterable) -> Filterable:
         if isinstance(line, list):
             return line[0]
@@ -80,6 +146,7 @@ class GetFirst(Splitter):
 
 class SplitLine(Splitter):
     "SplitLine splits a line on a predefined delimiter."
+
     def process(self, line: Filterable) -> Filterable:
         if isinstance(line, list):
             return line
@@ -92,6 +159,7 @@ class SplitLine(Splitter):
 
 class AsConstituents(Splitter):
     "AsConstituents resolves a line to the lexel, grammel and form."
+
     def process(self, line: Filterable) -> Filterable:
         try:
             lexel, grammel, form, *_ = line[0], *line[1].split(self.delim)
@@ -110,6 +178,7 @@ def filters() -> Generator[Filter, None, None]:
 
 class Pipeline:
     "Pipeline handles applying filters one by one to the input data."
+
     def __init__(self, filters: Iterable[Filter] = filters()) -> None:
         self.filters = filters
 
