@@ -2,9 +2,11 @@
 
 # Standard library imports
 from __future__ import annotations
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Generator, TextIO
+from typing import Generator, TextIO
+
+# Local library imports
+from .blocks import Parser
 
 
 __all__ = [
@@ -29,12 +31,6 @@ class DictLine:
     grammel: str
     form: str
     count: int
-
-
-class Parser(ABC):
-    @abstractmethod
-    def parse(self, fp: TextIO) -> Generator[Any, None, None]:
-        raise NotImplementedError
 
 
 class DictParser(Parser):
