@@ -51,6 +51,47 @@ def text_file_sample() -> StringIO:
     )
 
 
+@pytest.fixture()
+def tag_file_sample() -> StringIO:
+    return StringIO(
+        "{~f246v~}\n"
+        "$whenso/cj>=_*HwENNE-SO $so/cj-k_-SO\n"
+        "{=Two-line initial *H with the ascender extending two further lines up\n"
+        "in the left margin=}\n"
+        "$will/n_WIL\n"
+        "$wit/nOd_wIT\n"
+        "$oversti:gan/vps13{rh}_OFER-STI+Ed $over-/xp-v_OFER- $/vps13[V]{rh}_+Ed\n"
+        "{.}\n"
+        "{\\}\n"
+        "$then/av<=_*yENNE\n"
+        "$be/vps13_IS\n"
+        "$will/n_WIL\n"
+        "$&/cj_AND\n"
+        "$wit/n_WIT\n"
+        "$forlose/vSpp{rh}_FOR-LOR+E $for-/xp-v_FOR- $/vSpp[R]{rh}_+E\n"
+        "{.}\n"
+        "{\\}\n"
+        "$whenso/cj_*HwENNE-SO $so/cj-k_-SO\n"
+        "$will/n_wIL\n"
+        "$/P13GM_HIS\n"
+        "$heat/nOd_HETE\n"
+        "$hie/vps13K2{rh}_HI+Ed $/vps13[V]K2{rh}_+Ed\n"
+        "{.}\n"
+        "{\\}\n"
+        "$there/av_*yER\n"
+        "$benot/vps13_N+IS $n-/xp-neg>=_N+\n"
+        "$not/neg-v<=_NOwIHT\n"
+        "$wit/n_WIT\n"
+        "$choose/vSpp{rh}_I+COR+E $ge-/xp-vpp_I+ $/vSpp[R]{rh}_+E\n"
+        "{.}\n"
+        "{\\}\n"
+        "$often/av_*OFTE\n"
+        "$will/n_WIL\n"
+        "$to/pr_TO\n"
+        "$sorrow/n<pr_SEORzE\n"
+    )
+
+
 @pytest.mark.parametrize(
     "instance, want",
     [
@@ -440,23 +481,46 @@ def test_preamble_skipping_2() -> None:
     ]
 )
 def test_tags_line_valid(instance: str, want: bool) -> None:
-    assert tags.is_valid(instance) == want
+    parser = tags.TagParser()
+    assert parser._is_valid(instance) == want
 
 
 @pytest.mark.parametrize(
     "instance, want",
     [
-        ("$son/nG_SUN+ES $/Gn_+ES", ["son", "nG", "SUN+ES"]),
-        ("$&/cj_&", ["&", "cj", "&"]),
-        ("$/P21N_wE", ["", "P21N", "wE"]),
-        ("$thank{g}/nOd_yONC", ["thank{g}", "nOd", "yONC"]),
-        ("$be:tan/vpp_I+BET $ge-/xp-vpp_I+", ["be:tan", "vpp", "I+BET"]),
-        ("'_*IAMES", ["", "", "*IAMES"]),
-        (";_ENGLELOND", ["", "", "ENGLELOND"]),
+        (
+            "$son/nG_SUN+ES $/Gn_+ES",
+            tags.TagLine(*["$", "son", "nG", "SUN+ES"]),
+        ),
+        (
+            "$&/cj_&",
+            tags.TagLine(*["$", "&", "cj", "&"]),
+        ),
+        (
+            "$/P21N_wE",
+            tags.TagLine(*["$", "", "P21N", "wE"]),
+        ),
+        (
+            "$thank{g}/nOd_yONC",
+            tags.TagLine(*["$", "thank{g}", "nOd", "yONC"]),
+        ),
+        (
+            "$be:tan/vpp_I+BET $ge-/xp-vpp_I+",
+            tags.TagLine(*["$", "be:tan", "vpp", "I+BET"]),
+        ),
+        (
+            "'_*IAMES",
+            tags.TagLine(*["'", "", "", "*IAMES"]),
+        ),
+        (
+            ";_ENGLELOND",
+            tags.TagLine(*[";", "", "", "ENGLELOND"]),
+        ),
     ]
 )
 def test_tag_line_parsing(instance: str, want: bool) -> None:
-    assert tags.parse_line(instance) == want
+    parser = tags.TagParser()
+    assert parser._parse(instance) == want
 
 
 @pytest.mark.parametrize(
@@ -533,3 +597,24 @@ def test_filter_pipeline(instance: str, want: list[str]) -> None:
     pipe = tags.Pipeline(tags.filters())
     has = pipe(instance)
     assert has == want
+
+
+@pytest.mark.parametrize(
+    "instance",
+    [
+        "{~f246v~}\n",
+        "{=Two-line initial *H with ascender extending two further lines up\n",
+        "{.}\n",
+        "{\\}\n",
+    ]
+)
+def test_tag_parse_raises_parsing_error(instance: str) -> None:
+    with pytest.raises(tags.TagParsingError):
+        func = tags.TagParser()._parse
+        func(instance)
+
+
+def test_tag_parser(tag_file_sample: StringIO) -> None:
+    parser: tags.Parser = tags.TagParser()
+    result = parser.parse(tag_file_sample)
+    assert len(list(result)) == 24
