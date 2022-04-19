@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Generator, TextIO
 
 # Local library imports
-from .blocks import Parser
+from .parser import Parser
 
 
 __all__ = [

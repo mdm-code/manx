@@ -8,7 +8,9 @@ import itertools
 from typing import Iterable, Generator, TextIO, TypeAlias
 
 # Local library imports
-from .blocks import Parser, T, Token, Word
+from .parser import Parser
+from .token import T, Token
+from .word import Word
 
 
 __all__ = [
