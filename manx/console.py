@@ -75,35 +75,49 @@ def main():
             dicts = [
                 f.as_io() for f in files if f.type == corpus.FileType.Dict
             ]
-            pd = parsing.DictParser()
+            dict_parser = parsing.DictParser()
 
             if args.verbose:
                 pdicts = [
-                    list(pd.parse(t))
+                    list(dict_parser.parse(t))
                     for t in tqdm(
                         dicts,
                         desc="Parsing dict files",
                     )
                 ]
             else:
-                pdicts = [list(pd.parse(t)) for t in dicts]
+                pdicts = [list(dict_parser.parse(t)) for t in dicts]
 
             with mp.Pool(mp.cpu_count()) as pool:
                 texts = [
                     f.as_io() for f in files if f.type == corpus.FileType.Text
                 ]
-                pt = parsing.TextParser()
+                text_parser = parsing.TextParser()
 
                 if args.verbose:
                     ptexts: list[list[Word]] = list(
                         tqdm(
-                            pool.imap_unordered(pt.parse, texts),
+                            pool.imap_unordered(text_parser.parse, texts),
                             total=len(texts),
                             desc="Parsing text files",
                         )
                     )
                 else:
-                    ptexts = pool.map(pt.parse, texts)
+                    ptexts = pool.map(text_parser.parse, texts)
+
+            tags = [f.as_io() for f in files if f.type == corpus.FileType.Tags]
+            tag_parser = parsing.TagParser()
+
+            if args.verbose:
+                ptags: list[list[parsing.TagLine]] = [
+                    list(tag_parser.parse(t))
+                    for t in tqdm(
+                        tags,
+                        desc="Parsing tag files",
+                    )
+                ]
+            else:
+                ptags = [list(tag_parser.parse(t)) for t in tags]
 
 
 if __name__ == "__main__":
