@@ -32,3 +32,9 @@ def test_dummy(parsed: Generator[parsing.TagLine, None, None]) -> None:
     assert txt._uuid == txt._uuid
     assert txt.id != txt2.id
     assert txt.id == txt.id
+
+    with pytest.raises(AttributeError):
+        txt.label = ""  # type: ignore
+
+    with pytest.raises(AttributeError):
+        txt.words = []  # type: ignore

@@ -17,14 +17,13 @@ TODO:
     1. Text is able to be turned to ngrams
     2. Text is able to be turned to POS vector
     3. Text is able to represent word as fasttext embedding vector
-    5. Text is immutable
     6. Text exposes its content for persistence
 """
 
 
 class Text:
     def __init__(self, label: str, elems: list[TagLine]) -> None:
-        self.label = label
+        self._label = label
         self._elems = elems
 
     def __eq__(self, other: object) -> bool:
@@ -33,11 +32,15 @@ class Text:
         return self.id == other.id
 
     @property
-    def id(self) -> uuid.UUID:
+    def label(self) -> str:
+        return self._label
+
+    @property
+    def id(self) -> str:
         if hasattr(self, "_uuid"):
-            return self._uuid
+            return self._uuid.hex
         self._uuid: uuid.UUID = uuid.uuid4()
-        return self._uuid
+        return self._uuid.hex
 
     @property
     def words(self) -> list[TagLine]:
