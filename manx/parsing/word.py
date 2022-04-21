@@ -11,6 +11,9 @@ if TYPE_CHECKING:
     from .token import Token
 
 
+__all__ = ["Word"]
+
+
 class Word:
     """Word is the final outcome of the word form parsing."""
 
