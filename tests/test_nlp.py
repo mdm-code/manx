@@ -1,8 +1,5 @@
 """Tests for the nlp package."""
 
-# Standard library imports
-from typing import Generator
-
 # Third-party library imports
 import pytest
 
@@ -12,32 +9,44 @@ from manx.nlp import text
 
 
 @pytest.fixture
-def parsed() -> Generator[parsing.TagLine, None, None]:
+def parsed() -> list[parsing.TagLine]:
     def _inner():
         yield parsing.TagLine(*["$", "son", "nG", "SUN+ES"])
         yield parsing.TagLine(*["$", "", "P21N", "wE"])
         yield parsing.TagLine(*["$", "be:tan", "vpp", "I+BET"])
-    return _inner() 
+    return list(_inner())
 
 
-def test_dummy(parsed: Generator[parsing.TagLine, None, None]) -> None:
+def test_text_words_immutable(parsed: list[parsing.TagLine]) -> None:
+    """Verify if words are returned as a copy upon each call."""
     label = "tituslang2t"
-    words = list(parsed)
-    txt = text.Text(label=label, elems=words.copy())
-    txt2 = text.Text(label=label, elems=words.copy())
-    assert txt.words is not words
-    assert txt.label == label
-    assert txt != txt2
-    assert txt._uuid != txt2._uuid
-    assert txt._uuid == txt._uuid
-    assert txt.id != txt2.id
-    assert txt.id == txt.id
+    t = text.Text(label, parsed)
+    assert t.words is not t.words
 
-    with pytest.raises(AttributeError):
-        txt.label = ""  # type: ignore
 
-    with pytest.raises(AttributeError):
-        txt.words = []  # type: ignore
+def test_text_id_uniqueness(parsed: list[parsing.TagLine]) -> None:
+    """Check if IDs differ for two different objects."""
+    t1 = text.Text("", parsed)
+    t2 = text.Text("", parsed)
+    assert t1.id != t2.id
 
-    assert txt.text() == "SUN+ES wE I+BET"
-    assert txt.text(strip=True) == "SUNES wE IBET"
+
+def test_text_equality(parsed: list[parsing.TagLine]) -> None:
+    """Each Text object is assigned a unique UUID used in equality check."""
+    t1 = text.Text("", parsed)
+    t2 = text.Text("", parsed)
+    assert t1 != t2
+
+@pytest.mark.parametrize(
+    "strip, want",
+    [
+        (False, "SUN+ES wE I+BET"),
+        (True, "SUNES wE IBET"),
+    ]
+)
+def test_text_output(
+    parsed: list[parsing.TagLine], strip: bool, want: str
+) -> None:
+    """Verify regular and stripped text output."""
+    t = text.Text("tituslang2t", parsed)
+    assert t.text(strip=strip) == want

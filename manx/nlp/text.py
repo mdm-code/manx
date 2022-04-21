@@ -12,14 +12,13 @@ import uuid
 if typing.TYPE_CHECKING:
     from manx.parsing import TagLine
 
-"""
-TODO:
-    1. Text is able to be turned to ngrams
-    2. Text is able to be turned to POS vector
-    3. Text is able to represent word as fasttext embedding vector
-"""
 
-
+# TODO: Text is able to return ngrams of varied length
+# TODO: Text is able to retrun POS vectors of varied length
+# TODO: Text can combined ngrams and POS vectors
+# TODO: Text can represent words as fasttext embedding vectors
+# TODO: Text errors out when prebuilt fasttext model does not exist
+# TODO: nlp.load(from_web: bool = True) is made available
 class Text:
     def __init__(self, label: str, elems: list[TagLine]) -> None:
         self._label = label
