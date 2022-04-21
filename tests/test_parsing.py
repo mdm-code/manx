@@ -723,3 +723,40 @@ def test_lexel_simplification(lexel: str, want: str) -> None:
 )
 def test_tag_pos_inference(instance: tags.TagLine, want: tags.POS) -> None:
     assert instance.pos == want
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        (
+            tags.TagLine(*["$", "son", "nG", "SUN+ES"]),
+            "$son/nG_SUN+ES",
+        ),
+        (
+            tags.TagLine(*["$", "&", "cj", "&"]),
+            "$&/cj_&",
+        ),
+        (
+            tags.TagLine(*["$", "", "P21N", "wE"]),
+            "$/P21N_wE",
+        ),
+        (
+            tags.TagLine(*["$", "thank{g}", "nOd", "yONC"]),
+            "$thank{g}/nOd_yONC",
+        ),
+        (
+            tags.TagLine(*["$", "be:tan", "vpp", "I+BET"]),
+            "$be:tan/vpp_I+BET",
+        ),
+        (
+            tags.TagLine(*["'", "", "", "*IAMES"]),
+            "'_*IAMES",
+        ),
+        (
+            tags.TagLine(*[";", "", "", "ENGLELOND"]),
+            ";_ENGLELOND",
+        ),
+    ]
+)
+def test_format_tag_as_line(instance: tags.TagLine, want: bool) -> None:
+    assert instance.line == want

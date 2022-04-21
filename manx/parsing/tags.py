@@ -117,10 +117,18 @@ class TagLine(POSTagger):
         self.lexel = lexel if lexel else grammel
         self.stripped_lexel = self._strip(lexel) if lexel else grammel
         self.grammel = grammel
-
-        # NOTE: Only ; and ' are used as prefixes, $ is not
-        form = form if prefix == "$" else prefix + form
-        self._form = Word(Token(text=form, type=T.REGULAR))
+        self._form = Word(
+            Token(
+                # NOTE: Only ; and ' are used as prefixes, $ is not
+                text=form if prefix == "$" else prefix + form,
+                type=T.REGULAR,
+            )
+        )
+        match prefix:
+            case "$":
+                self.line = f"{prefix}{lexel}/{grammel}_{form}"
+            case _:
+                self.line = f"{prefix}_{form}"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
