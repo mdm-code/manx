@@ -1,31 +1,17 @@
-"""Blocks groups together shared text elements."""
+"""
+Word defines a Word structure representing the form of a corpus word token.
+"""
 
 # Standard library imports
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-import enum
-from typing import Any, Generator, TextIO
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+# Local library imports
+if TYPE_CHECKING:
+    from .token import Token
 
 
-class Parser(ABC):
-    @abstractmethod
-    def parse(self, fp: TextIO) -> Generator[Any, None, None]:
-        raise NotImplementedError
-
-
-@enum.unique
-class T(enum.Enum):
-    EOF = 0
-    REGULAR = 1
-    BRACKET = 2
-    WHITESPACE = 3
-    COMMENT = 4
-
-
-@dataclass(frozen=True, slots=True)
-class Token:
-    text: str
-    type: T
+__all__ = ["Word"]
 
 
 class Word:

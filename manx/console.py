@@ -13,7 +13,7 @@ from tqdm import tqdm
 from manx import corpus, parsing
 
 if TYPE_CHECKING:
-    from manx.parsing.texts import Word
+    from manx.parsing.word import Word
 
 
 def main():

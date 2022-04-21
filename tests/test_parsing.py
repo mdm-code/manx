@@ -618,3 +618,145 @@ def test_tag_parser(tag_file_sample: StringIO) -> None:
     parser: tags.Parser = tags.TagParser()
     result = parser.parse(tag_file_sample)
     assert len(list(result)) == 24
+
+
+@pytest.mark.parametrize(
+    "lexel, pos",
+    [
+        ("nOd", tags.POS.Noun),
+        ("nOi", tags.POS.Noun),
+        ("n<pr", tags.POS.Noun),
+        ("n<pr", tags.POS.Noun),
+        ("n<pr-k", tags.POS.Noun),
+        ("n<pr-t", tags.POS.Noun),
+        ("n-voc", tags.POS.Noun),
+        ("n-av", tags.POS.Noun),
+        ("nG", tags.POS.Noun),
+        ("npl", tags.POS.Noun),
+        ("naj", tags.POS.Noun),
+        ("n-t", tags.POS.Noun),
+        ("P11N", tags.POS.Pron),
+        ("P22Oi", tags.POS.Pron),
+        ("P12G", tags.POS.Pron),
+        ("P21GD", tags.POS.Pron),
+        ("P02Oi", tags.POS.Pron),
+        ("P13GF", tags.POS.Pron),
+        ("P23OdX", tags.POS.Pron),
+        ("P13MXM", tags.POS.Pron),
+        ("indef", tags.POS.Pron),
+        ("A<pr", tags.POS.Det),
+        ("TN", tags.POS.Det),
+        ("TOd-ad", tags.POS.Det),
+        ("TOd-as", tags.POS.Det),
+        ("D-cpv", tags.POS.Det),
+        ("Dis<pr-ad", tags.POS.Pron),
+        ("DespnOd", tags.POS.Pron),
+        ("DospnRTAplOi", tags.POS.Pron),
+        ("RTIpl", tags.POS.Pron),
+        ("RTA<=", tags.POS.Pron),
+        ("RT", tags.POS.Pron),
+        ("qcG", tags.POS.Num),
+        ("qoaj<pr", tags.POS.Num),
+        ("qoaj<pr-k", tags.POS.Num),
+        ("aj", tags.POS.Adj),
+        ("aj{rh}", tags.POS.Adj),
+        ("ajOd", tags.POS.Adj),
+        ("ajpl<pr{rh}", tags.POS.Adj),
+        ("ajnplOd{rh}", tags.POS.Adj),
+        ("ajpl-cpv", tags.POS.Adj),
+        ("vps13-ct", tags.POS.Verb),
+        ("vps23F-apn", tags.POS.Verb),
+        ("vps13-ptform", tags.POS.Verb),
+        ("vps11", tags.POS.Verb),
+        ("vps11Fir", tags.POS.Verb),
+        ("vpt13K2", tags.POS.Verb),
+        ("vsjps23", tags.POS.Verb),
+        ("vSpt12", tags.POS.Verb),
+        ("v-imp22", tags.POS.Verb),
+        ("vi{rh}", tags.POS.Verb),
+        ("vi-m", tags.POS.Verb),
+        ("vi-imp", tags.POS.Verb),
+        ("vnFier{rh}", tags.POS.Verb),
+        ("av", tags.POS.Adv),
+        ("av-cpv", tags.POS.Adv),
+        ("av-sup", tags.POS.Adv),
+        ("av>=", tags.POS.Adv),
+        ("av-k", tags.POS.Adv),
+        ("pr", tags.POS.Prep),
+        ("pr<", tags.POS.Prep),
+        ("pr+T", tags.POS.Prep),
+        ("int", tags.POS.Int),
+        ("cj", tags.POS.Conj),
+        ("cj>=", tags.POS.Conj),
+        ("cj<=", tags.POS.Conj),
+        ("neg-v", tags.POS.Neg),
+    ]
+)
+def test_pos_tagging(lexel: str, pos: tags.POS) -> None:
+    assert tags.POSTagger.infer(lexel) == pos
+
+
+@pytest.mark.parametrize(
+    "lexel, want",
+    [
+        ("in{p}", "in"),
+        ("about{re}", "about"),
+        ("therein{p}", "therein"),
+        ("therein", "therein"),
+        ("full{v}", "full"),
+        ("ha:tan{c}", "ha:tan"),
+        ("nor[neg]", "nor"),
+        ("nor[or]", "nor"),
+    ]
+)
+def test_lexel_simplification(lexel: str, want: str) -> None:
+    assert tags.TagLine("", lexel, "", "").stripped_lexel == want
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        (tags.TagLine(*["$", "son", "nG", "SUN+ES"]), tags.POS.Noun),
+        (tags.TagLine(*["$", "", "P21N", "wE"]), tags.POS.Pron),
+        (tags.TagLine(*["$", "be:tan", "vpp", "I+BET"]), tags.POS.Verb),
+    ]
+)
+def test_tag_pos_inference(instance: tags.TagLine, want: tags.POS) -> None:
+    assert instance.pos == want
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        (
+            tags.TagLine(*["$", "son", "nG", "SUN+ES"]),
+            "$son/nG_SUN+ES",
+        ),
+        (
+            tags.TagLine(*["$", "&", "cj", "&"]),
+            "$&/cj_&",
+        ),
+        (
+            tags.TagLine(*["$", "", "P21N", "wE"]),
+            "$/P21N_wE",
+        ),
+        (
+            tags.TagLine(*["$", "thank{g}", "nOd", "yONC"]),
+            "$thank{g}/nOd_yONC",
+        ),
+        (
+            tags.TagLine(*["$", "be:tan", "vpp", "I+BET"]),
+            "$be:tan/vpp_I+BET",
+        ),
+        (
+            tags.TagLine(*["'", "", "", "*IAMES"]),
+            "'_*IAMES",
+        ),
+        (
+            tags.TagLine(*[";", "", "", "ENGLELOND"]),
+            ";_ENGLELOND",
+        ),
+    ]
+)
+def test_format_tag_as_line(instance: tags.TagLine, want: bool) -> None:
+    assert instance.line == want

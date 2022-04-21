@@ -8,7 +8,9 @@ import itertools
 from typing import Iterable, Generator, TextIO, TypeAlias
 
 # Local library imports
-from .blocks import Parser, T, Token, Word
+from .parser import Parser
+from .token import T, Token
+from .word import Word
 
 
 __all__ = [
@@ -34,7 +36,77 @@ class Prefix(str, enum.Enum):
     regular = "$"
 
 
-class TagLine:
+class POS(enum.Enum):
+    Undef = 0
+    Noun = 1
+    Verb = 2
+    Adj = 3
+    Adv = 4
+    Pron = 5
+    Prep = 6
+    Conj = 7
+    Det = 8
+    Num = 9
+    Int = 10
+    Neg = 11
+
+
+class POSTagger:
+    """POSTagger handles part-of-speech tagging og LAEME.
+
+    The brutally (over-)simplified taxonomy used here is purely practical.
+    Given the complexity of the original tagging system, a simpler set of
+    features had to be conceived to use part-of-speech information in machine
+    learning algorithms.
+    """
+
+    @staticmethod
+    def infer(grammel: str) -> POS:
+        match grammel[0]:
+            case "n":
+                if grammel.startswith("neg"):
+                    return POS.Neg
+                return POS.Noun
+            case "q":
+                return POS.Num
+            case "v":
+                return POS.Verb
+            case "c":
+                return POS.Conj
+            case "A" | "T":
+                return POS.Det
+            case "P" | "R" | "D":
+                match grammel:
+                    case "D-cpv":
+                        return POS.Det
+                return POS.Pron
+            # NOTE: `im` infinitive marker before verbs was left out on purpose
+            case "i":
+                match grammel[1]:
+                    case "n":
+                        match grammel[2]:
+                            case "d":  # indef
+                                return POS.Pron
+                            case "t":  # int
+                                return POS.Int
+                        return POS.Undef
+                return POS.Undef
+            case "a":
+                match grammel[1]:
+                    case "j":
+                        return POS.Adj
+                    case "v":
+                        return POS.Adv
+                return POS.Undef
+            case "p":
+                match grammel[1]:
+                    case "r":
+                        return POS.Prep
+                return POS.Undef
+        return POS.Undef
+
+
+class TagLine(POSTagger):
     """TagLine represents a single valid line from .TAG corpus file."""
 
     def __init__(
@@ -43,11 +115,20 @@ class TagLine:
         self._prefix = prefix
         # NOTE: Carry over grammel to lexel if there is no lexel
         self.lexel = lexel if lexel else grammel
+        self.stripped_lexel = self._strip(lexel) if lexel else grammel
         self.grammel = grammel
-
-        # NOTE: Only ; and ' are used as prefixes, $ is not
-        form = form if prefix == "$" else prefix + form
-        self._form = Word(Token(text=form, type=T.REGULAR))
+        self._form = Word(
+            Token(
+                # NOTE: Only ; and ' are used as prefixes, $ is not
+                text=form if prefix == "$" else prefix + form,
+                type=T.REGULAR,
+            )
+        )
+        match prefix:
+            case "$":
+                self.line = f"{prefix}{lexel}/{grammel}_{form}"
+            case _:
+                self.line = f"{prefix}_{form}"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
@@ -64,6 +145,10 @@ class TagLine:
             return result
 
     @property
+    def pos(self) -> POS:
+        return self.infer(self.grammel)
+
+    @property
     def prefix(self) -> Prefix:
         return Prefix(self._prefix)
 
@@ -74,6 +159,13 @@ class TagLine:
     @property
     def stripped_form(self) -> str:
         return self._form.stripped_text
+
+    def _strip(self, lexel: str) -> str:
+        if (idx := lexel.find("{")) != -1:
+            return lexel[:idx]
+        if (idx := lexel.find("[")) != -1:
+            return lexel[:idx]
+        return lexel
 
 
 class TagParser(Parser):

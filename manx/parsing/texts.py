@@ -5,7 +5,8 @@ from contextlib import contextmanager
 from typing import Callable, Generator, TextIO
 
 # Local library imports
-from .blocks import T, Token, Word
+from .token import T, Token
+from .word import Word
 
 
 __all__ = ["TextParser"]
