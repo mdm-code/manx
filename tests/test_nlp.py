@@ -17,7 +17,7 @@ def parsed() -> Generator[parsing.TagLine, None, None]:
         yield parsing.TagLine(*["$", "son", "nG", "SUN+ES"])
         yield parsing.TagLine(*["$", "", "P21N", "wE"])
         yield parsing.TagLine(*["$", "be:tan", "vpp", "I+BET"])
-    return _inner()
+    return _inner() 
 
 
 def test_dummy(parsed: Generator[parsing.TagLine, None, None]) -> None:
@@ -38,3 +38,6 @@ def test_dummy(parsed: Generator[parsing.TagLine, None, None]) -> None:
 
     with pytest.raises(AttributeError):
         txt.words = []  # type: ignore
+
+    assert txt.text() == "SUN+ES wE I+BET"
+    assert txt.text(strip=True) == "SUNES wE IBET"

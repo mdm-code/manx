@@ -5,11 +5,11 @@ of natural language processing.
 
 # Standard library imports
 from __future__ import annotations
-from typing import TYPE_CHECKING
+import typing
 import uuid
 
 # Local library imports
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from manx.parsing import TagLine
 
 """
@@ -17,7 +17,6 @@ TODO:
     1. Text is able to be turned to ngrams
     2. Text is able to be turned to POS vector
     3. Text is able to represent word as fasttext embedding vector
-    6. Text exposes its content for persistence
 """
 
 
@@ -45,3 +44,8 @@ class Text:
     @property
     def words(self) -> list[TagLine]:
         return self._elems.copy()
+
+    def text(self, *, strip: bool = False) -> typing.Text:
+        return " ".join(
+            [w.stripped_form if strip else w.form for w in self._elems]
+        )
