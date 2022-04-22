@@ -13,9 +13,6 @@ if typing.TYPE_CHECKING:
     from manx.parsing import TagLine
 
 
-# TODO: Text is able to return ngrams of varied length
-# TODO: Text is able to retrun POS vectors of varied length
-# TODO: Text can combined ngrams and POS vectors
 # TODO: Text can represent words as fasttext embedding vectors
 # TODO: Text errors out when prebuilt fasttext model does not exist
 # TODO: nlp.load(from_web: bool = True) is made available
@@ -48,3 +45,8 @@ class Text:
         return " ".join(
             [w.stripped_form if strip else w.form for w in self._elems]
         )
+
+
+def ngrams(source: Text, *, n: int = 3) -> list[tuple[TagLine, ...]]:
+    result = list(zip(*[source.words[n:] for n in range(n)]))
+    return result

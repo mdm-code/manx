@@ -1,11 +1,15 @@
 """Tests for the nlp package."""
 
+# Standard library imports
+from io import StringIO
+
 # Third-party library imports
 import pytest
 
 # Local library imports
 from manx import parsing
 from manx.nlp import text
+from .test_parsing import tag_file_sample
 
 
 @pytest.fixture
@@ -50,3 +54,20 @@ def test_text_output(
     """Verify regular and stripped text output."""
     t = text.Text("tituslang2t", parsed)
     assert t.text(strip=strip) == want
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "n, want",
+    [
+        (3, 22),
+        (4, 21),
+        (5, 20),
+    ]
+)
+def test_ngrams(n: int, want: int, tag_file_sample: StringIO) -> None:
+    """Check if the output ngram list has the expected length."""
+    parser = parsing.TagParser()
+    txt = text.Text("", list(parser.parse(tag_file_sample)))
+    ngrms = text.ngrams(txt, n=n)
+    assert len(ngrms) == want
