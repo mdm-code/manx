@@ -13,6 +13,9 @@ if typing.TYPE_CHECKING:
     from manx.parsing import TagLine
 
 
+__all__ = ["ngrams", "Text"]
+
+
 # TODO: Text can represent words as fasttext embedding vectors
 # TODO: Text errors out when prebuilt fasttext model does not exist
 # TODO: nlp.load(from_web: bool = True) is made available
