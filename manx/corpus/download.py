@@ -223,6 +223,10 @@ class CorpusFile:
     def text(self) -> str:
         return self.contents.text
 
+    @property
+    def stem(self) -> str:
+        return self.name.split(".")[0]
+
     def as_io(self) -> io.StringIO:
         return io.StringIO(self.contents.text)
 
