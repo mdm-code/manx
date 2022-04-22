@@ -2,18 +2,10 @@
 
 # Standard library imports
 import argparse
-import multiprocessing as mp
 import sys
-from typing import TYPE_CHECKING
-
-# Third-party library imports
-from tqdm import tqdm
 
 # Local library imports
-from manx import corpus, parsing
-
-if TYPE_CHECKING:
-    from manx.parsing.word import Word
+from manx import corpus, load, nlp
 
 
 def main():
@@ -64,61 +56,11 @@ def main():
                 files=[f for f in files if f.type == corpus.FileType.Tags],
             )
             corpus.traverse(root)
-
         case "parse":
-            if args.from_web:
-                downloader = corpus.Downloader()
-                files = downloader.download(args.verbose)
-            else:
-                files = corpus.from_root(args.root)
-
-            dicts = [
-                f.as_io() for f in files if f.type == corpus.FileType.Dict
-            ]
-            dict_parser = parsing.DictParser()
-
-            if args.verbose:
-                pdicts = [
-                    list(dict_parser.parse(t))
-                    for t in tqdm(
-                        dicts,
-                        desc="Parsing dict files",
-                    )
-                ]
-            else:
-                pdicts = [list(dict_parser.parse(t)) for t in dicts]
-
-            with mp.Pool(mp.cpu_count()) as pool:
-                texts = [
-                    f.as_io() for f in files if f.type == corpus.FileType.Text
-                ]
-                text_parser = parsing.TextParser()
-
-                if args.verbose:
-                    ptexts: list[list[Word]] = list(
-                        tqdm(
-                            pool.imap_unordered(text_parser.parse, texts),
-                            total=len(texts),
-                            desc="Parsing text files",
-                        )
-                    )
-                else:
-                    ptexts = pool.map(text_parser.parse, texts)
-
-            tags = [f.as_io() for f in files if f.type == corpus.FileType.Tags]
-            tag_parser = parsing.TagParser()
-
-            if args.verbose:
-                ptags: list[list[parsing.TagLine]] = [
-                    list(tag_parser.parse(t))
-                    for t in tqdm(
-                        tags,
-                        desc="Parsing tag files",
-                    )
-                ]
-            else:
-                ptags = [list(tag_parser.parse(t)) for t in tags]
-
+            laeme = load(
+                from_web=args.from_web, verbose=args.verbose, root=args.root
+            )
+            print(laeme[0].label, nlp.ngrams(laeme[0]))
 
 if __name__ == "__main__":
     main()
