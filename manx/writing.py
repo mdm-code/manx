@@ -37,5 +37,3 @@ def write(
             fp.writelines(lines)
         case _:
             raise WriteFormatError(f"{fmt} is not supported")
-
-

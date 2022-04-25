@@ -91,13 +91,13 @@ def parents() -> file.Dir:
     ],
 )
 def test_filter_elaeme(text: str, expected: bool) -> None:
-    f = download.ELALMEFileFilter()
+    f = download.LAEMEFileFilter()
     have = f(text)
     assert have == expected
 
 
 def test_link_parser(web_contents) -> None:
-    parser = download.LinkParser(filters=[download.ELALMEFileFilter()])
+    parser = download.LinkParser(filters=[download.LAEMEFileFilter()])
     have = parser.parse(web_contents)
     assert len(have) == 9
 
@@ -105,13 +105,13 @@ def test_link_parser(web_contents) -> None:
 @pytest.mark.parametrize(
     "filters, text, expected",
     [
-        ([download.ELALMEFileFilter()], "worcthcreedt.txt", True),
-        ([download.ELALMEFileFilter()], "worcthfragst.tag", True),
-        ([download.ELALMEFileFilter()], "worcthcreedt_mysql.txt", True),
-        ([download.ELAEMEIgnoredFiles()], "filelist.txt", False),
-        ([download.ELAEMEIgnoredFiles()], "filelist_base.txt", False),
-        ([download.ELAEMEIgnoredFiles()], "digbysiritht.txt", False),
-        ([download.ELAEMEIgnoredFiles()], "worcthfragst.tag", True),
+        ([download.LAEMEFileFilter()], "worcthcreedt.txt", True),
+        ([download.LAEMEFileFilter()], "worcthfragst.tag", True),
+        ([download.LAEMEFileFilter()], "worcthcreedt_mysql.txt", True),
+        ([download.LAEMEIgnoredFiles()], "filelist.txt", False),
+        ([download.LAEMEIgnoredFiles()], "filelist_base.txt", False),
+        ([download.LAEMEIgnoredFiles()], "digbysiritht.txt", False),
+        ([download.LAEMEIgnoredFiles()], "worcthfragst.tag", True),
         ([], "worcthgrglt.html", True),
         (None, "worcthgrglt.dic", True),
     ],
@@ -339,8 +339,8 @@ def test_downloader(mocker, web_contents: str) -> None:
     mocker.patch("httpx.AsyncClient.get", return_value=MockResponse())
 
     parser = download.LinkParser(
-        root_url=download.ELAEME_DATA_URL,
-        filters=[download.ELALMEFileFilter()],
+        root_url=download.LAEME_DATA_URL,
+        filters=[download.LAEMEFileFilter()],
     )
     downloader = download.Downloader()
     _ = downloader.download()
