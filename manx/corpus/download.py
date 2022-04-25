@@ -1,4 +1,4 @@
-"""Download interacts wiht the ELAEME website to download file contents."""
+"""Download interacts wiht the LAEME website to download file contents."""
 
 # Standard library imports
 from __future__ import annotations
@@ -24,17 +24,17 @@ if TYPE_CHECKING:
 __all__ = [
     "Downloader",
     "DownloadError",
-    "ELALMEFileFilter",
+    "LAEMEFileFilter",
     "FileType",
     "LinkParser",
 ]
 
 
-ELAEME_DATA_URL = "http://www.lel.ed.ac.uk/ihd/laeme2/tagged_data/"
+LAEME_DATA_URL = "http://www.lel.ed.ac.uk/ihd/laeme2/tagged_data/"
 
-ELALME_FILE_EXTS = [".txt", ".tag"]
+LAEME_FILE_EXTS = [".txt", ".tag"]
 
-IGNORED_ELALME_FILES = [
+IGNORED_LAEME_FILES = [
     # NOTE: these four files contain file names only
     "filelist.txt",
     "filelist.tag",
@@ -106,21 +106,21 @@ class Filter(ABC):
         pass
 
 
-class ELALMEFileFilter(Filter):
-    """ELALMEFileFilter filters out file names with the provided patterns."""
+class LAEMEFileFilter(Filter):
+    """LAEMEFileFilter filters out file names with the provided patterns."""
 
-    def __init__(self, patterns: list[str] = ELALME_FILE_EXTS.copy()) -> None:
+    def __init__(self, patterns: list[str] = LAEME_FILE_EXTS.copy()) -> None:
         super().__init__(patterns)
 
     def _filter(self, text: str) -> bool:
         return any(map(lambda x: text.endswith(x), self.patterns))
 
 
-class ELAEMEIgnoredFiles(Filter):
-    """ELAEMEIgnoredFiles filters out files that do not contribute to the corpus."""
+class LAEMEIgnoredFiles(Filter):
+    """LAEMEIgnoredFiles filters out files that do not contribute to the corpus."""
 
     def __init__(
-        self, patterns: list[str] = IGNORED_ELALME_FILES.copy()
+        self, patterns: list[str] = IGNORED_LAEME_FILES.copy()
     ) -> None:
         super().__init__(patterns)
 
@@ -133,7 +133,7 @@ class Downloader:
 
     def __init__(
         self,
-        root_url: str = ELAEME_DATA_URL,
+        root_url: str = LAEME_DATA_URL,
         parser: Parser | None = None,
     ) -> None:
         self.root_url = root_url
@@ -141,8 +141,8 @@ class Downloader:
             self.parser: Parser = LinkParser(
                 root_url=root_url,
                 filters=[
-                    ELALMEFileFilter(),
-                    ELAEMEIgnoredFiles(),
+                    LAEMEFileFilter(),
+                    LAEMEIgnoredFiles(),
                 ],
             )
         else:
@@ -211,7 +211,7 @@ class FileType(enum.Enum):
 
 
 class CorpusFile:
-    """CorpusFile represents a corpus text file from ELAEME."""
+    """CorpusFile represents a corpus text file from LAEME."""
 
     def __init__(
         self, name: str, contents: WebContents | FileContents

@@ -9,20 +9,20 @@ from manx import corpus, load, nlp
 
 
 def main():
-    """Manx - Early Middle English lemmatizer based on ELAEME."""
+    """Manx - Early Middle English lemmatizer based on LAEME."""
     parser = argparse.ArgumentParser(description=main.__doc__)
     subparsers = parser.add_subparsers(
         dest="command", help="These are manx subcommands"
     )
     download = subparsers.add_parser(
-        "download", description="manx-download - Download ELAEME corpus files"
+        "download", description="manx-download - Download LAEME corpus files"
     )
     download.add_argument(
         "-r", "--root", help="root directory for corpus files", required=True
     )
     download.add_argument("-v", "--verbose", action="store_true")
     parse = subparsers.add_parser(
-        "parse", description="manx-parse Parse ELAEME corpus files"
+        "parse", description="manx-parse Parse LAEME corpus files"
     )
     parse.add_argument(
         "--from-web",

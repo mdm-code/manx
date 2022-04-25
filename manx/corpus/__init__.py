@@ -1,4 +1,4 @@
-"Corpus module downloads ELAEME data and stores it on the local file system."
+"Corpus module downloads LAEME data and stores it on the local file system."
 
 # Local library imports
 from .download import *
