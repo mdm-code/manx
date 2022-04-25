@@ -1,25 +1,27 @@
 """
-Text module contains the representation of a single corpus text for the purpose
+Doc module contains the representation of a single corpus text for the purpose
 of natural language processing.
 """
 
 # Standard library imports
 from __future__ import annotations
-import typing
+from typing import Text, TYPE_CHECKING
 import uuid
 
 # Local library imports
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from manx.parsing import TagLine
 
 
-__all__ = ["ngrams", "Text"]
+__all__ = ["ngrams", "Doc"]
 
 
+# TODO: Represent Text as Span with [::] __get-item__
+# TODO: Make label optional
 # TODO: Text can represent words as fasttext embedding vectors
 # TODO: Text errors out when prebuilt fasttext model does not exist
 # TODO: nlp.load(from_web: bool = True) is made available
-class Text:
+class Doc:
     def __init__(self, label: str, elems: list[TagLine]) -> None:
         self._label = label
         self._elems = elems
@@ -44,12 +46,12 @@ class Text:
     def words(self) -> list[TagLine]:
         return self._elems.copy()
 
-    def text(self, *, strip: bool = False) -> typing.Text:
+    def text(self, *, strip: bool = False) -> Text:
         return " ".join(
             [w.stripped_form if strip else w.form for w in self._elems]
         )
 
 
-def ngrams(source: Text, *, n: int = 3) -> list[tuple[TagLine, ...]]:
+def ngrams(source: Doc, *, n: int = 3) -> list[tuple[TagLine, ...]]:
     result = list(zip(*[source.words[n:] for n in range(n)]))
     return result

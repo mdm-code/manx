@@ -62,5 +62,6 @@ def main():
             )
             print(laeme[0].label, nlp.ngrams(laeme[0]))
 
+
 if __name__ == "__main__":
     main()

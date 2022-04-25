@@ -12,7 +12,7 @@ __all__ = ["load"]
 
 def load(
     *, from_web: bool = False, root: str = "", verbose: bool = False
-) -> list[nlp.Text]:
+) -> list[nlp.Doc]:
     """Load LAEME corpus data."""
     if from_web:
         downloader = corpus.Downloader()
@@ -25,16 +25,17 @@ def load(
     parser = parsing.TagParser()
     if verbose:
         result = [
-            nlp.Text(
-                label, list(parser.parse(file)),
-            ) for label, file in tqdm(
+            nlp.Doc(
+                label,
+                list(parser.parse(file)),
+            )
+            for label, file in tqdm(
                 source_files, desc="parsing LAEME tag files"
             )
         ]
     else:
         result = [
-            nlp.Text(
-                label, list(parser.parse(file))
-            ) for label, file in source_files
+            nlp.Doc(label, list(parser.parse(file)))
+            for label, file in source_files
         ]
     return result

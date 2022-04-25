@@ -8,7 +8,7 @@ import pytest
 
 # Local library imports
 from manx import parsing
-from manx.nlp import text
+from manx.nlp import doc
 from .test_parsing import tag_file_sample
 
 
@@ -24,21 +24,21 @@ def parsed() -> list[parsing.TagLine]:
 def test_text_words_immutable(parsed: list[parsing.TagLine]) -> None:
     """Verify if words are returned as a copy upon each call."""
     label = "tituslang2t"
-    t = text.Text(label, parsed)
+    t = doc.Doc(label, parsed)
     assert t.words is not t.words
 
 
 def test_text_id_uniqueness(parsed: list[parsing.TagLine]) -> None:
     """Check if IDs differ for two different objects."""
-    t1 = text.Text("", parsed)
-    t2 = text.Text("", parsed)
+    t1 = doc.Doc("", parsed)
+    t2 = doc.Doc("", parsed)
     assert t1.id != t2.id
 
 
 def test_text_equality(parsed: list[parsing.TagLine]) -> None:
-    """Each Text object is assigned a unique UUID used in equality check."""
-    t1 = text.Text("", parsed)
-    t2 = text.Text("", parsed)
+    """Each Doc object is assigned a unique UUID used in equality check."""
+    t1 = doc.Doc("", parsed)
+    t2 = doc.Doc("", parsed)
     assert t1 != t2
 
 @pytest.mark.parametrize(
@@ -52,7 +52,7 @@ def test_text_output(
     parsed: list[parsing.TagLine], strip: bool, want: str
 ) -> None:
     """Verify regular and stripped text output."""
-    t = text.Text("tituslang2t", parsed)
+    t = doc.Doc("tituslang2t", parsed)
     assert t.text(strip=strip) == want
 
 
@@ -68,6 +68,6 @@ def test_text_output(
 def test_ngrams(n: int, want: int, tag_file_sample: StringIO) -> None:
     """Check if the output ngram list has the expected length."""
     parser = parsing.TagParser()
-    txt = text.Text("", list(parser.parse(tag_file_sample)))
-    ngrms = text.ngrams(txt, n=n)
+    txt = doc.Doc("", list(parser.parse(tag_file_sample)))
+    ngrms = doc.ngrams(txt, n=n)
     assert len(ngrms) == want
