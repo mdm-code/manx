@@ -5,7 +5,7 @@ import argparse
 import sys
 
 # Local library imports
-from manx import corpus, load, nlp
+from manx import corpus, Format, load, write
 
 
 def main():
@@ -36,6 +36,9 @@ def main():
         required=(False if "--from-web" in sys.argv[1:] else True),
     )
     parse.add_argument("-v", "--verbose", action="store_true")
+    parse.add_argument(
+        "-o", "--output", type=argparse.FileType("w"), default="-"
+    )
     args = parser.parse_args()
 
     match args.command:
@@ -60,7 +63,7 @@ def main():
             laeme = load(
                 from_web=args.from_web, verbose=args.verbose, root=args.root
             )
-            print(laeme[0].label, nlp.ngrams(laeme[0]))
+            write(fp=args.output, docs=laeme, fmt=Format.StripText)
 
 
 if __name__ == "__main__":
