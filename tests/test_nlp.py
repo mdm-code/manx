@@ -21,24 +21,24 @@ def parsed() -> list[parsing.TagLine]:
     return list(_inner())
 
 
-def test_text_words_immutable(parsed: list[parsing.TagLine]) -> None:
+def test_doc_words_immutable(parsed: list[parsing.TagLine]) -> None:
     """Verify if words are returned as a copy upon each call."""
     label = "tituslang2t"
-    t = doc.Doc(label, parsed)
+    t = doc.Doc(parsed, label)
     assert t.words is not t.words
 
 
-def test_text_id_uniqueness(parsed: list[parsing.TagLine]) -> None:
+def test_doc_id_uniqueness(parsed: list[parsing.TagLine]) -> None:
     """Check if IDs differ for two different objects."""
-    t1 = doc.Doc("", parsed)
-    t2 = doc.Doc("", parsed)
+    t1 = doc.Doc(parsed)
+    t2 = doc.Doc(parsed)
     assert t1.id != t2.id
 
 
-def test_text_equality(parsed: list[parsing.TagLine]) -> None:
+def test_doc_equality(parsed: list[parsing.TagLine]) -> None:
     """Each Doc object is assigned a unique UUID used in equality check."""
-    t1 = doc.Doc("", parsed)
-    t2 = doc.Doc("", parsed)
+    t1 = doc.Doc(parsed)
+    t2 = doc.Doc(parsed)
     assert t1 != t2
 
 @pytest.mark.parametrize(
@@ -48,12 +48,31 @@ def test_text_equality(parsed: list[parsing.TagLine]) -> None:
         (True, "SUNES wE IBET"),
     ]
 )
-def test_text_output(
+def test_doc_output(
     parsed: list[parsing.TagLine], strip: bool, want: str
 ) -> None:
     """Verify regular and stripped text output."""
-    t = doc.Doc("tituslang2t", parsed)
+    t = doc.Doc(parsed, "tituslang2t")
     assert t.text(strip=strip) == want
+
+
+@pytest.mark.parametrize(
+    "s, length",
+    [
+        (slice(0,10), 10),
+        (slice(10,20), 10),
+        (slice(5,10,3), 2),
+        (slice(0, 24), 24),
+        (slice(0, 24, 2), 12),
+    ]
+)
+def test_doc_getitem(
+    tag_file_sample: StringIO, s: slice, length: int
+) -> None:
+    parser = parsing.TagParser()
+    d = doc.Doc(list(parser.parse(tag_file_sample)))
+    span = d[s]
+    assert len(span) == length
 
 
 @pytest.mark.integration
@@ -68,6 +87,6 @@ def test_text_output(
 def test_ngrams(n: int, want: int, tag_file_sample: StringIO) -> None:
     """Check if the output ngram list has the expected length."""
     parser = parsing.TagParser()
-    txt = doc.Doc("", list(parser.parse(tag_file_sample)))
-    ngrms = doc.ngrams(txt, n=n)
+    d = doc.Doc(list(parser.parse(tag_file_sample)))
+    ngrms = doc.ngrams(d, n=n)
     assert len(ngrms) == want

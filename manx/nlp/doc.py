@@ -13,23 +13,28 @@ if TYPE_CHECKING:
     from manx.parsing import TagLine
 
 
-__all__ = ["ngrams", "Doc"]
+__all__ = ["ngrams", "Doc", "Span"]
 
 
-# TODO: Represent Text as Span with [::] __get-item__
-# TODO: Make label optional
 # TODO: Text can represent words as fasttext embedding vectors
 # TODO: Text errors out when prebuilt fasttext model does not exist
-# TODO: nlp.load(from_web: bool = True) is made available
 class Doc:
-    def __init__(self, label: str, elems: list[TagLine]) -> None:
-        self._label = label
+    """Doc object representing a single LAEME document."""
+
+    def __init__(self, elems: list[TagLine], label: str | None = None) -> None:
+        self._label = label if label else ""
         self._elems = elems
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
             return False
         return self.id == other.id
+
+    def __len__(self) -> int:
+        return len(self._elems)
+
+    def __getitem__(self, i: slice | int) -> Span:
+        return Span(self.words[i])
 
     @property
     def label(self) -> str:
@@ -52,6 +57,24 @@ class Doc:
         )
 
 
+class Span:
+    """A slice of Doc object."""
+
+    def __init__(self, elems: list[TagLine] | TagLine) -> None:
+        if isinstance(elems, list):
+            self._elems = elems
+        else:
+            self._elems = [elems]
+
+    def __len__(self) -> int:
+        return len(self._elems)
+
+    def __getitem__(self, i: slice | int) -> TagLine | list[TagLine]:
+        return self._elems.copy()[i]
+
+
 def ngrams(source: Doc, *, n: int = 3) -> list[tuple[TagLine, ...]]:
-    result = list(zip(*[source.words[n:] for n in range(n)]))
+    result: list[tuple[TagLine, ...]] = list(
+        zip(*[source[n:] for n in range(n)])  # type: ignore
+    )
     return result
