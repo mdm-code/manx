@@ -5,27 +5,22 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import asyncio
 from dataclasses import dataclass
-import enum
 import httpx
-import io
-import os
 from tqdm import tqdm
-from typing import TYPE_CHECKING, Text, Protocol
+from typing import Protocol, Text
 import urllib.parse
 
 # Third-party library imports
 from bs4 import BeautifulSoup  # type: ignore
 
 # Local library imports
-if TYPE_CHECKING:
-    from .file import Dir
+from .file import CorpusFile
 
 
 __all__ = [
     "Downloader",
     "DownloadError",
     "LAEMEFileFilter",
-    "FileType",
     "LinkParser",
 ]
 
@@ -204,63 +199,6 @@ class Downloader:
         return WebContents(contents, response.status_code)
 
 
-class FileType(enum.Enum):
-    Unidentified = 0
-    Text = 1
-    Dict = 2
-    Html = 3
-    Tags = 4
-
-
-class CorpusFile:
-    """CorpusFile represents a corpus text file from LAEME."""
-
-    def __init__(
-        self, name: str, contents: WebContents | FileContents
-    ) -> None:
-        self.name = name
-        self.contents = contents
-
-    @property
-    def text(self) -> str:
-        return self.contents.text
-
-    @property
-    def stem(self) -> str:
-        return self.name.split(".")[0]
-
-    def as_io(self) -> io.StringIO:
-        return io.StringIO(self.contents.text)
-
-    @property
-    def type(self) -> FileType:
-        if hasattr(self, "_type"):
-            return self._type
-        self._type: FileType = self._eval_type()
-        return self._type
-
-    def _eval_type(self) -> FileType:
-        try:
-            stem, *_, ext = self.name.split(".")
-        except ValueError:
-            stem, ext = "", ""
-        match ext.lower():
-            case "tag":
-                return FileType.Tags
-            case "html":
-                return FileType.Html
-            case "txt":
-                if stem.split("_")[-1] == "mysql":
-                    return FileType.Dict
-                return FileType.Text
-            case _:
-                return FileType.Unidentified
-
-    def save(self, node: Dir) -> None:
-        with open(os.path.join(node.path, self.name), "w") as fout:
-            fout.write(self.text)
-
-
 @dataclass(slots=True, frozen=True)
 class WebContents:
     text: str
@@ -269,11 +207,6 @@ class WebContents:
     @property
     def ok(self) -> bool:
         return self.status_code == 200
-
-
-@dataclass(slots=True, frozen=True)
-class FileContents:
-    text: str
 
 
 class Link:
