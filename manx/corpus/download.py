@@ -10,7 +10,7 @@ import httpx
 import io
 import os
 from tqdm import tqdm
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Text, Protocol
 import urllib.parse
 
 # Third-party library imports
@@ -55,9 +55,9 @@ class DownloadError(Exception):
 
 
 class Parser(ABC):
-    def __init__(self, filters: list[Filter] | None = None) -> None:
+    def __init__(self, filters: list[Filtered] | None = None) -> None:
         if not filters:
-            self.filters: list[Filter] = []
+            self.filters: list[Filtered] = []
         else:
             self.filters = filters
 
@@ -70,7 +70,7 @@ class LinkParser(Parser):
     """LinkParser uses Beautiful Soup to retrieve file names aka links."""
 
     def __init__(
-        self, root_url: str = "", filters: list[Filter] | None = None
+        self, root_url: str = "", filters: list[Filtered] | None = None
     ) -> None:
         self.root_url = root_url
         super().__init__(filters)
@@ -94,35 +94,37 @@ class LinkParser(Parser):
         return True
 
 
-class Filter(ABC):
-    def __init__(self, patterns: list[str]) -> None:
+class Filtered(Protocol):
+    def __call__(self, text: Text) -> bool:
+        raise NotImplementedError
+
+    def _filter(self, text: Text) -> bool:
+        raise NotImplementedError
+
+
+class LAEMEFileFilter:
+    """LAEMEFileFilter filters out file names with the provided patterns."""
+
+    def __init__(self, patterns: list[str] = LAEME_FILE_EXTS.copy()) -> None:
         self.patterns = patterns
 
     def __call__(self, text: str) -> bool:
         return self._filter(text)
 
-    @abstractmethod
-    def _filter(self, text: str) -> bool:
-        pass
-
-
-class LAEMEFileFilter(Filter):
-    """LAEMEFileFilter filters out file names with the provided patterns."""
-
-    def __init__(self, patterns: list[str] = LAEME_FILE_EXTS.copy()) -> None:
-        super().__init__(patterns)
-
     def _filter(self, text: str) -> bool:
         return any(map(lambda x: text.endswith(x), self.patterns))
 
 
-class LAEMEIgnoredFiles(Filter):
-    """LAEMEIgnoredFiles filters out files that do not contribute to the corpus."""
+class LAEMEIgnoredFiles:
+    """LAEMEIgnoredFiles filters out files not contributing to the corpus."""
 
     def __init__(
         self, patterns: list[str] = IGNORED_LAEME_FILES.copy()
     ) -> None:
-        super().__init__(patterns)
+        self.patterns = patterns
+
+    def __call__(self, text: str) -> bool:
+        return self._filter(text)
 
     def _filter(self, text: str) -> bool:
         return not any(map(lambda x: text == x, self.patterns))
