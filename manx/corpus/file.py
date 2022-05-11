@@ -1,116 +1,76 @@
-"""File handles ordering and saving files on the local file system."""
+"""File exposes shared corpus file implementation."""
 
 # Standard library imports
 from __future__ import annotations
 import enum
-from functools import wraps
+import io
 import os
-from pathlib import Path
-from typing import Callable
+from typing import Protocol, TYPE_CHECKING
 
 # Local library imports
-from .download import FileContents, CorpusFile
+if TYPE_CHECKING:
+    from .fs import Dir
 
 
-__all__ = ["Dir", "DirName", "from_root", "traverse"]
+__all__ = ["FileType"]
 
 
-class DirName(str, enum.Enum):
-    texts = "texts"
-    dicts = "dicts"
-    tags = "tags"
+class FileType(enum.Enum):
+    Unidentified = 0
+    Text = 1
+    Dict = 2
+    Html = 3
+    Tags = 4
 
-    @classmethod
+
+class Contents(Protocol):
     @property
-    def members(cls) -> set[str]:
-        return set(cls.__members__.keys())
-
-    @classmethod
-    def is_valid(cls, s: str) -> bool:
-        return s in cls.members  # type: ignore
+    def text(self) -> str:
+        raise NotImplementedError
 
 
-class Dir:
-    """Dir represents a directory node in the file system."""
+class CorpusFile:
+    """CorpusFile represents a corpus text file from LAEME."""
 
-    def __init__(
-        self, name: str, files: list[CorpusFile], parent: Dir | None = None
-    ) -> None:
+    def __init__(self, name: str, contents: Contents) -> None:
         self.name = name
-        self.parent = parent
-        self.files: list[CorpusFile] = files
-        self.children: list[Dir] = []
+        self.contents = contents
 
     @property
-    def path(self) -> str:
-        parent = self.parent
-        path_elems = [self.name]
-        while parent:
-            path_elems.append(parent.name)
-            parent = parent.parent
-        else:
-            path_elems.reverse()
-            self._path = os.path.join(*path_elems)
-        return self._path
+    def text(self) -> str:
+        return self.contents.text
 
-    def __truediv__(self: Dir, other: Dir) -> Dir:
-        return self.join(other)
+    @property
+    def stem(self) -> str:
+        return self.name.split(".")[0]
 
-    def join(self: Dir, other: Dir) -> Dir:
-        if not isinstance(other, type(self)):
-            raise TypeError
-        other.parent = self
-        self.children.append(other)
-        return other
+    def as_io(self) -> io.StringIO:
+        return io.StringIO(self.contents.text)
 
+    @property
+    def type(self) -> FileType:
+        if hasattr(self, "_type"):
+            return self._type
+        self._type: FileType = self._eval_type()
+        return self._type
 
-def files(func: Callable[[str], Dir]) -> Callable[[str], list[CorpusFile]]:
-    @wraps(func)
-    def wrapped(*args: str, **kwargs: str):
-        d = func(*args, **kwargs)
-        result: list[CorpusFile] = []
-        for subdir in d.children:
-            result.extend(subdir.files)
-        return result
+    def _eval_type(self) -> FileType:
+        try:
+            stem, *_, ext = self.name.split(".")
+        except ValueError:
+            stem, ext = "", ""
+        match ext.lower():
+            case "tag":
+                return FileType.Tags
+            case "html":
+                return FileType.Html
+            case "txt":
+                if stem.split("_")[-1] == "mysql":
+                    return FileType.Dict
+                return FileType.Text
+            case _:
+                return FileType.Unidentified
 
-    return wrapped
-
-
-@files
-def from_root(root: str) -> Dir:
-    """from_root reconstructs the corpus directory structure in memory."""
-    if not os.path.isdir(root):
-        raise ValueError
-
-    directory = Dir(root, files=[])
-
-    def _read(fn: os.PathLike) -> FileContents:
-        with open(fn) as f:
-            result = FileContents(text=f.read())
-        return result
-
-    for d in filter(
-        lambda x: x.is_dir(),
-        (Path(os.path.join(root, p)) for p in os.listdir(root)),
-    ):
-        if DirName.is_valid(d.name):
-            subdir = directory / Dir(d.name, files=[])
-            files = list(
-                filter(
-                    lambda x: x.is_file(),
-                    (d.joinpath(p) for p in os.listdir(d)),
-                )
-            )
-            corpus_files = [CorpusFile(f.name, _read(f)) for f in files]
-            subdir.files.extend(corpus_files)
-    return directory
-
-
-def traverse(node: Dir) -> None:
-    """Traverse directory structure creating directories and files."""
-    if not os.path.isdir(node.path):
-        os.mkdir(node.path)
-    for f in node.files:
-        f.save(node)
-    for child in node.children:
-        traverse(child)
+    def save(self, node: Dir) -> None:
+        with open(os.path.join(node.path, self.name), "w") as fout:
+            fout.write(self.text)

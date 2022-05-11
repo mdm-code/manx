@@ -5,27 +5,22 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import asyncio
 from dataclasses import dataclass
-import enum
 import httpx
-import io
-import os
 from tqdm import tqdm
-from typing import TYPE_CHECKING
+from typing import Protocol, Text
 import urllib.parse
 
 # Third-party library imports
 from bs4 import BeautifulSoup  # type: ignore
 
 # Local library imports
-if TYPE_CHECKING:
-    from .file import Dir
+from .file import CorpusFile
 
 
 __all__ = [
     "Downloader",
     "DownloadError",
     "LAEMEFileFilter",
-    "FileType",
     "LinkParser",
 ]
 
@@ -55,9 +50,9 @@ class DownloadError(Exception):
 
 
 class Parser(ABC):
-    def __init__(self, filters: list[Filter] | None = None) -> None:
+    def __init__(self, filters: list[Filtered] | None = None) -> None:
         if not filters:
-            self.filters: list[Filter] = []
+            self.filters: list[Filtered] = []
         else:
             self.filters = filters
 
@@ -70,7 +65,7 @@ class LinkParser(Parser):
     """LinkParser uses Beautiful Soup to retrieve file names aka links."""
 
     def __init__(
-        self, root_url: str = "", filters: list[Filter] | None = None
+        self, root_url: str = "", filters: list[Filtered] | None = None
     ) -> None:
         self.root_url = root_url
         super().__init__(filters)
@@ -94,35 +89,37 @@ class LinkParser(Parser):
         return True
 
 
-class Filter(ABC):
-    def __init__(self, patterns: list[str]) -> None:
+class Filtered(Protocol):
+    def __call__(self, text: Text) -> bool:
+        raise NotImplementedError
+
+    def _filter(self, text: Text) -> bool:
+        raise NotImplementedError
+
+
+class LAEMEFileFilter:
+    """LAEMEFileFilter filters out file names with the provided patterns."""
+
+    def __init__(self, patterns: list[str] = LAEME_FILE_EXTS.copy()) -> None:
         self.patterns = patterns
 
     def __call__(self, text: str) -> bool:
         return self._filter(text)
 
-    @abstractmethod
-    def _filter(self, text: str) -> bool:
-        pass
-
-
-class LAEMEFileFilter(Filter):
-    """LAEMEFileFilter filters out file names with the provided patterns."""
-
-    def __init__(self, patterns: list[str] = LAEME_FILE_EXTS.copy()) -> None:
-        super().__init__(patterns)
-
     def _filter(self, text: str) -> bool:
         return any(map(lambda x: text.endswith(x), self.patterns))
 
 
-class LAEMEIgnoredFiles(Filter):
-    """LAEMEIgnoredFiles filters out files that do not contribute to the corpus."""
+class LAEMEIgnoredFiles:
+    """LAEMEIgnoredFiles filters out files not contributing to the corpus."""
 
     def __init__(
         self, patterns: list[str] = IGNORED_LAEME_FILES.copy()
     ) -> None:
-        super().__init__(patterns)
+        self.patterns = patterns
+
+    def __call__(self, text: str) -> bool:
+        return self._filter(text)
 
     def _filter(self, text: str) -> bool:
         return not any(map(lambda x: text == x, self.patterns))
@@ -202,63 +199,6 @@ class Downloader:
         return WebContents(contents, response.status_code)
 
 
-class FileType(enum.Enum):
-    Unidentified = 0
-    Text = 1
-    Dict = 2
-    Html = 3
-    Tags = 4
-
-
-class CorpusFile:
-    """CorpusFile represents a corpus text file from LAEME."""
-
-    def __init__(
-        self, name: str, contents: WebContents | FileContents
-    ) -> None:
-        self.name = name
-        self.contents = contents
-
-    @property
-    def text(self) -> str:
-        return self.contents.text
-
-    @property
-    def stem(self) -> str:
-        return self.name.split(".")[0]
-
-    def as_io(self) -> io.StringIO:
-        return io.StringIO(self.contents.text)
-
-    @property
-    def type(self) -> FileType:
-        if hasattr(self, "_type"):
-            return self._type
-        self._type: FileType = self._eval_type()
-        return self._type
-
-    def _eval_type(self) -> FileType:
-        try:
-            stem, *_, ext = self.name.split(".")
-        except ValueError:
-            stem, ext = "", ""
-        match ext.lower():
-            case "tag":
-                return FileType.Tags
-            case "html":
-                return FileType.Html
-            case "txt":
-                if stem.split("_")[-1] == "mysql":
-                    return FileType.Dict
-                return FileType.Text
-            case _:
-                return FileType.Unidentified
-
-    def save(self, node: Dir) -> None:
-        with open(os.path.join(node.path, self.name), "w") as fout:
-            fout.write(self.text)
-
-
 @dataclass(slots=True, frozen=True)
 class WebContents:
     text: str
@@ -267,11 +207,6 @@ class WebContents:
     @property
     def ok(self) -> bool:
         return self.status_code == 200
-
-
-@dataclass(slots=True, frozen=True)
-class FileContents:
-    text: str
 
 
 class Link:
