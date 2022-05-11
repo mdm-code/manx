@@ -1,11 +1,12 @@
 """Parser defines a common parser interface."""
 
 # Standard library imports
-from abc import ABC, abstractmethod
-from typing import Any, Generator, TextIO
+from typing import Any, Generator, Protocol, TextIO
 
 
-class Parser(ABC):
-    @abstractmethod
+__all__ = ["Parser"]
+
+
+class Parser(Protocol):
     def parse(self, fp: TextIO) -> Generator[Any, None, None]:
         raise NotImplementedError
