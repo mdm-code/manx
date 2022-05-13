@@ -10,7 +10,7 @@ setup(
     description="A toolkit for early Middle English lemmatization.",
     long_description=open("README.md").read(),
     author="Michał Adamczyk",
-    author_email="code.madamczyk@gmail.com",
+    author_email="code.madamczyk at gmail dot com",
     url="https://github.com/mdm-code/manx",
     key="lemmatization, deep learning, neural networks, Middle English, NLP",
     packages=find_packages(include=["manx", "manx.*"]),

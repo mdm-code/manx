@@ -11,6 +11,7 @@ import pytest
 # Local library imports
 from manx.corpus import download
 from manx.corpus import file
+from manx.corpus import fs
 
 
 @pytest.fixture
@@ -75,9 +76,9 @@ align="right">2019-05-14 15:33  </td><td align="right">213K</td><td> </td></tr>
 
 
 @pytest.fixture
-def parents() -> file.Dir:
-    root = file.Dir("root", files=[])
-    return root / file.Dir("dicts", [])
+def parents() -> fs.Dir:
+    root = fs.Dir("root", files=[])
+    return root / fs.Dir("dicts", [])
 
 
 @pytest.mark.parametrize(
@@ -177,69 +178,69 @@ def test_web_contents_status(case: download.WebContents, want: bool) -> None:
     "case, want",
     [
         (
-            download.CorpusFile("eul107t.txt", download.WebContents("", 200)),
-            download.FileType.Text,
+            file.CorpusFile("eul107t.txt", download.WebContents("", 200)),
+            file.FileType.Text,
         ),
         (
-            download.CorpusFile(
+            file.CorpusFile(
                 "add27909t_mysql.txt", download.WebContents("", 200)
             ),
-            download.FileType.Dict,
+            file.FileType.Dict,
         ),
         (
-            download.CorpusFile(
+            file.CorpusFile(
                 "royalkgct.html", download.WebContents("", 200)
             ),
-            download.FileType.Html,
+            file.FileType.Html,
         ),
         (
-            download.CorpusFile(
+            file.CorpusFile(
                 "bodley57t.tag", download.WebContents("", 200)
             ),
-            download.FileType.Tags,
+            file.FileType.Tags,
         ),
         (
-            download.CorpusFile("", download.WebContents("", 200)),
-            download.FileType.Unidentified,
+            file.CorpusFile("", download.WebContents("", 200)),
+            file.FileType.Unidentified,
         ),
         (
-            download.CorpusFile("fonts.css", download.WebContents("", 200)),
-            download.FileType.Unidentified,
+            file.CorpusFile("fonts.css", download.WebContents("", 200)),
+            file.FileType.Unidentified,
         ),
     ],
 )
 def test_corpus_file_type(
-    case: download.CorpusFile, want: download.FileType
+    case: file.CorpusFile, want: file.FileType
 ) -> None:
     assert case.type == want
 
 
 def test_corpus_file_type_param():
     """Check the hasattr code section of the method on CorpusFile."""
-    case = download.CorpusFile("egstellat.txt", download.WebContents("", 200))
+    case = file.CorpusFile("egstellat.txt", download.WebContents("", 200))
     _ = case.type
-    assert case.type == download.FileType.Text
+    assert case.type == file.FileType.Text
 
 
 @pytest.mark.parametrize(
     "instance, text",
     [
         (
-            download.CorpusFile("", download.WebContents("foo", 403)),
+            file.CorpusFile("", download.WebContents("foo", 403)),
             "foo",
         ),
         (
-            download.CorpusFile("", download.WebContents("bar", 200)),
+            file.CorpusFile("", download.WebContents("bar", 200)),
             "bar",
         ),
         (
-            download.CorpusFile("", download.WebContents("baz", 300)),
+            file.CorpusFile("", download.WebContents("baz", 300)),
             "baz",
         ),
     ],
 )
 def test_corpus_file_promoted_fields(
-    instance: download.CorpusFile, text: str
+    instance: file.CorpusFile, text: str
 ) -> None:
     assert instance.text == text
 
@@ -247,8 +248,8 @@ def test_corpus_file_promoted_fields(
 def test_corpus_file_saving(mocker) -> None:
     m = mocker.mock_open()
     mocker.patch("builtins.open", m)
-    f = download.CorpusFile("file.txt", download.WebContents("foo", 201))
-    directory = file.Dir("", [])
+    f = file.CorpusFile("file.txt", download.WebContents("foo", 201))
+    directory = fs.Dir("", [])
     f.save(directory)
     m.assert_called_once_with(f.name, "w")
     m().write.assert_called_once_with("foo")
@@ -257,13 +258,13 @@ def test_corpus_file_saving(mocker) -> None:
 @pytest.mark.parametrize(
     "case, want",
     [
-        (file.Dir("foo", files=[]), "root/dicts/foo"),
-        (file.Dir("bar", files=[]), "root/dicts/bar"),
-        (file.Dir("baz", files=[]), "root/dicts/baz"),
+        (fs.Dir("foo", files=[]), "root/dicts/foo"),
+        (fs.Dir("bar", files=[]), "root/dicts/bar"),
+        (fs.Dir("baz", files=[]), "root/dicts/baz"),
     ],
 )
 def test_dir_path_property(
-    case: file.Dir, want: str, parents: file.Dir
+    case: fs.Dir, want: str, parents: fs.Dir
 ) -> None:
     joined = parents.join(case)
     assert joined.path == want
@@ -272,12 +273,12 @@ def test_dir_path_property(
 @pytest.mark.parametrize(
     "case",
     [
-        file.Dir("spam", files=[]),
-        file.Dir("ham", files=[]),
-        file.Dir("food", files=[]),
+        fs.Dir("spam", files=[]),
+        fs.Dir("ham", files=[]),
+        fs.Dir("food", files=[]),
     ],
 )
-def test_dir_truediv(case: file.Dir, parents: file.Dir) -> None:
+def test_dir_truediv(case: fs.Dir, parents: fs.Dir) -> None:
     joined = parents / case
     assert joined == parents.join(case)
 
@@ -294,26 +295,26 @@ def test_dir_traverse(mocker) -> None:
     mocker.patch("os.mkdir", mkdir)
 
     dirs = [
-        file.Dir("root", files=[]),
-        file.Dir(
+        fs.Dir("root", files=[]),
+        fs.Dir(
             "dicts",
             files=[
-                download.CorpusFile(
+                file.CorpusFile(
                     "foo.txt", download.WebContents("hello", 200)
                 ),
-                download.CorpusFile(
+                file.CorpusFile(
                     "bar.txt", download.WebContents("world", 200)
                 ),
             ],
         ),
-        file.Dir("texts", files=[]),
+        fs.Dir("texts", files=[]),
     ]
 
     root, current = dirs[0], dirs[0]
     for d in dirs[1:]:
         current = current / d
 
-    file.traverse(root)
+    fs.traverse(root)
     assert opn.called
     assert mkdir.called
 
@@ -359,19 +360,19 @@ def test_downloader(mocker, web_contents: str) -> None:
     ]
 )
 def test_validate_dir_name(instance: str, want: bool) -> None:
-    has = file.DirName.is_valid(instance)
+    has = fs.DirName.is_valid(instance)
     assert has == want
 
 
 def test_files_works_on_empty_dir() -> None:
 
-    def _mock_func(*_) -> file.Dir:
-        d = file.Dir("temp", files=[])
-        d / file.Dir("subdir1", files=[])
-        d / file.Dir("subdir2", files=[])
+    def _mock_func(*_) -> fs.Dir:
+        d = fs.Dir("temp", files=[])
+        d / fs.Dir("subdir1", files=[])
+        d / fs.Dir("subdir2", files=[])
         return d
 
-    func = file.files(_mock_func)
+    func = fs.files(_mock_func)
     has = func("foo")
     assert len(has) == 0
 
@@ -391,4 +392,4 @@ def test_dir_obj_from_root() -> None:
         mpisfile.return_value = True
         mlsdir.return_value = ["texts", "dicts"]
 
-        _ = file.from_root("root")
+        _ = fs.from_root("root")

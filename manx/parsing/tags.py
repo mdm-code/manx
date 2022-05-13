@@ -5,10 +5,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import enum
 import itertools
-from typing import Iterable, Generator, TextIO, TypeAlias
+from typing import Iterable, Generator, Protocol, TextIO, TypeAlias
 
 # Local library imports
-from .parser import Parser
 from .token import T, Token
 from .word import Word
 
@@ -168,7 +167,7 @@ class TagLine(POSTagger):
         return lexel
 
 
-class TagParser(Parser):
+class TagParser:
     def parse(self, fp: TextIO) -> Generator[TagLine, None, None]:
         for line in fp:
             try:
@@ -206,6 +205,14 @@ class TagParser(Parser):
             return True
 
 
+class Filtering(Protocol):
+    def __call__(self, data: Filterable) -> Filterable:
+        raise NotImplementedError
+
+    def process(self, data: Filterable) -> Filterable:
+        raise NotImplementedError
+
+
 class Filter(ABC):
     def __call__(self, data: Filterable) -> Filterable:
         return self.process(data)
@@ -222,7 +229,7 @@ class SkipMark(Filter):
         return data[1:]
 
 
-class Splitter(Filter):
+class Splitter(Filter, ABC):
     def __init__(self, delim: str | None = None) -> None:
         self.delim = delim
 
@@ -230,20 +237,20 @@ class Splitter(Filter):
 class GetFirst(Splitter):
     "GetFirst gets the first element from a sequence."
 
-    def process(self, line: Filterable) -> Filterable:
-        if isinstance(line, list):
-            return line[0]
-        return line.split(self.delim)[0]
+    def process(self, data: Filterable) -> Filterable:
+        if isinstance(data, list):
+            return data[0]
+        return data.split(self.delim)[0]
 
 
 class SplitLine(Splitter):
     "SplitLine splits a line on a predefined delimiter."
 
-    def process(self, line: Filterable) -> Filterable:
-        if isinstance(line, list):
-            return line
+    def process(self, data: Filterable) -> Filterable:
+        if isinstance(data, list):
+            return data
         # NOTE: supply empty missing lexel
-        if len((l := line.split(self.delim))) == 1:
+        if len((l := data.split(self.delim))) == 1:
             return ["", *l]
         else:
             return l
@@ -252,15 +259,15 @@ class SplitLine(Splitter):
 class AsConstituents(Splitter):
     "AsConstituents resolves a line to the lexel, grammel and form."
 
-    def process(self, line: Filterable) -> Filterable:
+    def process(self, data: Filterable) -> Filterable:
         try:
-            lexel, grammel, form, *_ = line[0], *line[1].split(self.delim)
+            lexel, grammel, form, *_ = data[0], *data[1].split(self.delim)
         except IndexError:
-            raise FilterError(f"failed to split {line}")
+            raise FilterError(f"failed to split {data}")
         return [lexel, grammel, form]
 
 
-def filters() -> Generator[Filter, None, None]:
+def filters() -> Generator[Filtering, None, None]:
     """Filters provided an ordered sequence of filters."""
     yield SkipMark()
     yield GetFirst(" ")
@@ -271,7 +278,7 @@ def filters() -> Generator[Filter, None, None]:
 class Pipeline:
     "Pipeline handles applying filters one by one to the input data."
 
-    def __init__(self, filters: Iterable[Filter] = filters()) -> None:
+    def __init__(self, filters: Iterable[Filtering] = filters()) -> None:
         self.filters = filters
 
     def __call__(self, data: Filterable) -> Filterable:

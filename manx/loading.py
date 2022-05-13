@@ -22,7 +22,7 @@ def load(
     source_files = [
         (f.stem, f.as_io()) for f in files if f.type == corpus.FileType.Tags
     ]
-    parser = parsing.TagParser()
+    parser: parsing.TagParser = parsing.TagParser()
     if verbose:
         result = [
             nlp.Doc(

@@ -5,9 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Generator, TextIO
 
-# Local library imports
-from .parser import Parser
-
 
 __all__ = [
     "DictLine",
@@ -33,7 +30,7 @@ class DictLine:
     count: int
 
 
-class DictParser(Parser):
+class DictParser:
     def __init__(self, sep: str = DICT_SEP, n_fields: int = N_FIELDS) -> None:
         self.sep = sep
         self.n_fields = n_fields

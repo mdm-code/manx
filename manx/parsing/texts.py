@@ -178,7 +178,8 @@ class Lexer:
 
 
 class TextParser:
-    def parse_gen(self, file: TextIO) -> Generator[Word, None, None]:
+    @classmethod
+    def parse_gen(cls, file: TextIO) -> Generator[Word, None, None]:
         """Parse returns a Word object for each word tagged in LAEME."""
         lexer = Lexer(reader=TextReader(file=file, skip_preamble=True))
 
@@ -186,6 +187,7 @@ class TextParser:
             if token.type == T.REGULAR:
                 yield Word(token=token)
 
-    def parse(self, file: TextIO) -> list[Word]:
+    @classmethod
+    def parse(cls, file: TextIO) -> list[Word]:
         """Parse version suitable for multiprocessing."""
-        return list(self.parse_gen(file))
+        return list(cls.parse_gen(file))
