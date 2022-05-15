@@ -88,5 +88,5 @@ def test_ngrams(n: int, want: int, tag_file_sample: StringIO) -> None:
     """Check if the output ngram list has the expected length."""
     parser = parsing.TagParser()
     d = doc.Doc(list(parser.parse(tag_file_sample)))
-    ngrms = doc.ngrams(d, n=n)
+    ngrms = doc.ngrams(d[:], n=n)
     assert len(ngrms) == want

@@ -12,10 +12,7 @@ from .token import T, Token
 from .word import Word
 
 
-__all__ = [
-    "TagLine",
-    "TagParser",
-]
+__all__ = ["POS", "TagLine", "TagParser"]
 
 
 Filterable: TypeAlias = str | list[str]
@@ -61,6 +58,9 @@ class POSTagger:
 
     @staticmethod
     def infer(grammel: str) -> POS:
+        if not grammel:
+            return POS.Undef
+
         match grammel[0]:
             case "n":
                 if grammel.startswith("neg"):
@@ -105,11 +105,15 @@ class POSTagger:
         return POS.Undef
 
 
-class TagLine(POSTagger):
+class TagLine:
     """TagLine represents a single valid line from .TAG corpus file."""
 
     def __init__(
-        self, prefix: str, lexel: str, grammel: str, form: str
+        self,
+        prefix: str,
+        lexel: str,
+        grammel: str,
+        form: str,
     ) -> None:
         self._prefix = prefix
         # NOTE: Carry over grammel to lexel if there is no lexel
@@ -128,6 +132,7 @@ class TagLine(POSTagger):
                 self.line = f"{prefix}{lexel}/{grammel}_{form}"
             case _:
                 self.line = f"{prefix}_{form}"
+        self.tagger = POSTagger
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
@@ -145,7 +150,7 @@ class TagLine(POSTagger):
 
     @property
     def pos(self) -> POS:
-        return self.infer(self.grammel)
+        return self.tagger.infer(self.grammel)
 
     @property
     def prefix(self) -> Prefix:

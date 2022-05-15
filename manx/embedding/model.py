@@ -1,7 +1,9 @@
 # Standard library imports
 from __future__ import annotations
+from contextlib import redirect_stderr
 from dataclasses import asdict, dataclass
 import multiprocessing
+from os import PathLike
 from typing import Literal
 
 
@@ -10,7 +12,7 @@ import fasttext
 import numpy as np
 
 
-__all__ = ["Parameters", "train"]
+__all__ = ["load", "Model", "Parameters", "train"]
 
 
 @dataclass(slots=True, frozen=True)
@@ -40,17 +42,28 @@ class Model:
     def __init__(self, trained: fasttext.FastText._FastText) -> None:
         self._trained = trained
 
-    # NOTE: *args, **kwargs are being passed to __init__
+    # NOTE: *args, **kwargs are passed to __init__
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def save(self, output: str) -> None:
-        self._trained.save_model(output)
+    def save(self, fpath: PathLike[str]) -> None:
+        self._trained.save_model(fpath)
 
     def get_word_vector(self, word: str) -> np.ndarray:
         return self._trained.get_word_vector(word)
+
+
+def load(fpath: PathLike[str]) -> Model:
+    """Load FastText model given a file path."""
+    # NOTE: Monkey patch eprint on FastText to silence the warning message
+    fasttext.FastText.eprint = lambda _: None
+    try:
+        loaded = fasttext.load_model(fpath)
+    except ValueError:
+        raise ValueError(f"{fpath} cannot be loaded!")
+    return Model(trained=loaded)
 
 
 def train(params: Parameters) -> Model:
