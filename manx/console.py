@@ -3,6 +3,7 @@
 # Standard library imports
 import argparse
 import multiprocessing
+from pathlib import Path
 import sys
 
 # Local library imports
@@ -15,15 +16,19 @@ def main():
         description=main.__doc__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument(
+    subparsers = parser.add_subparsers(title="actions", dest="command")
+
+    verbose_parser = argparse.ArgumentParser(add_help=False)
+    verbose_parser.add_argument(
         "-v", "--verbose", action="store_true", help="verbose output"
     )
-    subparsers = parser.add_subparsers(dest="command", help="manx subcommands")
+
     dl = subparsers.add_parser(
         "download",
         help="download LAEME corpus files",
         description="Manx-download - Download LAEME corpus files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        parents=[verbose_parser],
     )
     dl.add_argument(
         "-r", "--root", help="root directory for corpus files", required=True
@@ -33,6 +38,7 @@ def main():
         help="parse LAEME corpus files",
         description="manx-parse - Parse LAEME corpus files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        parents=[verbose_parser],
     )
     parse.add_argument(
         "--from-web",
@@ -46,6 +52,12 @@ def main():
         required=(False if "--from-web" in sys.argv[1:] else True),
     )
     parse.add_argument(
+        "-m",
+        "--model",
+        help="fastText model file path",
+        default="laeme.bin",
+    )
+    parse.add_argument(
         "-f",
         "--format",
         help="corpus output format",
@@ -57,9 +69,10 @@ def main():
     )
     ft = subparsers.add_parser(
         "fasttext",
-        help="train fasttext model on LAEME data",
-        description="manx-fasttext - Train fasttext LAEME model",
+        help="train fastText model on LAEME data",
+        description="manx-fasttext - Train fastText LAEME model",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        parents=[verbose_parser],
     )
     ft.add_argument(
         "-i",
@@ -71,7 +84,7 @@ def main():
         "--model",
         choices=["skipgram", "cbow"],
         default="skipgram",
-        help="unsupervised fasttext model",
+        help="unsupervised fastText model",
     )
     ft.add_argument("--lrate", type=float, default=0.05, help="learning rate")
     ft.add_argument(
@@ -151,7 +164,7 @@ def main():
         "-o",
         "--output",
         help="output file path",
-        required=True,
+        default="laeme.bin",
     )
     args = parser.parse_args()
 
@@ -161,7 +174,10 @@ def main():
 
         case "parse":
             laeme = load(
-                from_web=args.from_web, verbose=args.verbose, root=args.root
+                model_path=args.model,
+                from_web=args.from_web,
+                verbose=args.verbose,
+                root=args.root,
             )
             fmt = Format(args.format)
             write(fp=args.output, docs=laeme, fmt=fmt)
@@ -186,6 +202,19 @@ def main():
                 t=args.sample_thresh,
                 verbose=2 if args.verbose else 0,
             )
+
+            if Path(args.output).exists():
+                print(
+                    f"{args.output} exists!\n"
+                    "Do you want to overwrite it? [yN]\n",
+                    file=sys.stderr,
+                )
+                match input().lower():
+                    case "y" | "yes":
+                        pass
+                    case _:
+                        return
+
             model = embedding.train(params)
             model.save(args.output)
 
