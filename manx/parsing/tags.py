@@ -12,10 +12,7 @@ from .token import T, Token
 from .word import Word
 
 
-__all__ = [
-    "TagLine",
-    "TagParser",
-]
+__all__ = ["POS", "TagLine", "TagParser"]
 
 
 Filterable: TypeAlias = str | list[str]
@@ -61,6 +58,9 @@ class POSTagger:
 
     @staticmethod
     def infer(grammel: str) -> POS:
+        if not grammel:
+            return POS.Undef
+
         match grammel[0]:
             case "n":
                 if grammel.startswith("neg"):
