@@ -16,9 +16,7 @@ def main():
         description=main.__doc__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    subparsers = parser.add_subparsers(
-        title="actions", dest="command"
-    )
+    subparsers = parser.add_subparsers(title="actions", dest="command")
 
     verbose_parser = argparse.ArgumentParser(add_help=False)
     verbose_parser.add_argument(
@@ -209,7 +207,7 @@ def main():
                 print(
                     f"{args.output} exists!\n"
                     "Do you want to overwrite it? [yN]\n",
-                    file=sys.stderr
+                    file=sys.stderr,
                 )
                 match input().lower():
                     case "y" | "yes":
