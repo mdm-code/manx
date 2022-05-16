@@ -1,6 +1,7 @@
 """CLI entrypoint for manx."""
 
 # Standard library imports
+from __future__ import annotations
 import argparse
 import multiprocessing
 from pathlib import Path
@@ -10,8 +11,7 @@ import sys
 from manx import download, embedding, Format, load, write, writing
 
 
-def main():
-    """Manx - Early Middle English lemmatizer based on LAEME."""
+def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=main.__doc__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -166,8 +166,13 @@ def main():
         help="output file path",
         default="laeme.bin",
     )
-    args = parser.parse_args()
+    result = parser.parse_args()
+    return result
 
+
+def main():
+    """Manx - Early Middle English lemmatizer based on LAEME."""
+    args = get_args()
     match args.command:
         case "download":
             download(args.root, args.verbose)
