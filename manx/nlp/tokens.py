@@ -33,6 +33,21 @@ class Token:
     _pos: POS
     _model: Model | None = field(repr=False, default=None)
     _embedding: np.ndarray = field(init=False, repr=False)
+    _uuid: uuid.UUID = field(init=False, repr=False)
+
+    def asdict(self) -> dict[str, str | np.ndarray | None]:
+        result: dict[str, str | np.ndarray | None] = {
+            "id": self.id,
+            "lexel": self.lexel,
+            "stripped_lexel": self.stripped_lexel,
+            "grammel": self.grammel,
+            "form": self.form,
+            "stripped_form": self.stripped_form,
+            "pos": self.pos,
+            "one_hot_pos_vector": self.one_hot_pos_vector,
+            "fast_text_embedding": self.embedding,
+        }
+        return result
 
     def __len__(self) -> int:
         return 1
@@ -52,6 +67,12 @@ class Token:
     @property
     def one_hot_pos_vector(self) -> npt.NDArray[np.uint8]:
         return self._pos.one_hot_vector
+
+    @property
+    def id(self) -> str:
+        if not hasattr(self, "_uuid"):
+            self._uuid: uuid.UUID = uuid.uuid4()
+        return self._uuid.hex
 
     def has_embedding(self) -> bool:
         if not self.embedding:
@@ -81,6 +102,7 @@ def doc(
     return result
 
 
+# TODO: Add asdict() function
 class Doc:
     """Doc object representing a single LAEME text."""
 
@@ -108,9 +130,8 @@ class Doc:
 
     @property
     def id(self) -> str:
-        if hasattr(self, "_uuid"):
-            return self._uuid.hex
-        self._uuid: uuid.UUID = uuid.uuid4()
+        if not hasattr(self, "_uuid"):
+            self._uuid: uuid.UUID = uuid.uuid4()
         return self._uuid.hex
 
     @property
