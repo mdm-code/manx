@@ -8,7 +8,7 @@ from typing import Any, Callable
 import pytest
 
 # Local library imports
-from manx.parsing import dicts, texts, tags
+from manx.parsing import dicts, texts, tags, parser
 
 
 @pytest.fixture
@@ -139,8 +139,8 @@ def test_parse_raises_parsing_error(instance: str) -> None:
 
 
 def test_dict_parser(dict_file_sample: StringIO) -> None:
-    parser: dicts.Parser = dicts.DictParser()
-    result = parser.parse(dict_file_sample)
+    p: parser.Parser = dicts.DictParser()
+    result = p.parse(dict_file_sample)
     assert len(list(result)) == 8
 
 
@@ -615,8 +615,8 @@ def test_tag_parse_raises_parsing_error(instance: str) -> None:
 
 
 def test_tag_parser(tag_file_sample: StringIO) -> None:
-    parser: tags.Parser = tags.TagParser()
-    result = parser.parse(tag_file_sample)
+    p: parser.Parser = tags.TagParser()
+    result = p.parse(tag_file_sample)
     assert len(list(result)) == 24
 
 
