@@ -5,6 +5,8 @@ from io import StringIO, SEEK_END, SEEK_CUR
 from typing import Any, Callable
 
 # Third-party library
+import numpy as np
+from numpy import typing as npt
 import pytest
 
 # Local library imports
@@ -760,3 +762,44 @@ def test_tag_pos_inference(instance: tags.TagLine, want: tags.POS) -> None:
 )
 def test_format_tag_as_line(instance: tags.TagLine, want: bool) -> None:
     assert instance.line == want
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        (
+            tags.POS.Noun,
+            np.array(
+                [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.uint8
+            )
+        ),
+        (
+            tags.POS.Int,
+            np.array(
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], dtype=np.uint8
+            )
+        ),
+        (
+            tags.POS.Undef,
+            np.array(
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.uint8
+            )
+        ),
+        (
+            tags.POS.Pron,
+            np.array(
+                [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], dtype=np.uint8
+            )
+        ),
+        (
+            tags.POS.Verb,
+            np.array(
+                [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.uint8
+            )
+        ),
+    ]
+)
+def test_pos_enum_one_hot_encoding(
+    instance: tags.POS, want: npt.NDArray[np.uint8]
+) -> None:
+    assert np.array_equal(instance.one_hot_vector, want)
