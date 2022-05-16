@@ -12,6 +12,7 @@ import uuid
 
 # Third-party library imports
 import numpy as np
+from numpy import typing as npt
 
 # Local library imports
 if TYPE_CHECKING:
@@ -47,6 +48,10 @@ class Token:
         if not hasattr(self, "_embedding"):
             self._embedding = self._model.get_word_vector(self.form)
         return self._embedding
+
+    @property
+    def one_hot_pos_vector(self) -> npt.NDArray[np.uint8]:
+        return self._pos.one_hot_vector
 
 
 def doc(
