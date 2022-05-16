@@ -53,6 +53,11 @@ class Token:
     def one_hot_pos_vector(self) -> npt.NDArray[np.uint8]:
         return self._pos.one_hot_vector
 
+    def has_embedding(self) -> bool:
+        if not self.embedding:
+            return False
+        return True
+
 
 def doc(
     elems: list[TagLine], model: Model | None = None, label: str | None = None
