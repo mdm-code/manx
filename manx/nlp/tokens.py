@@ -5,9 +5,9 @@ of natural language processing.
 
 # Standard library imports
 from __future__ import annotations
-from copy import deepcopy
+from copy import copy
 from dataclasses import dataclass, field
-from typing import Generic, Text, TYPE_CHECKING, TypeVar, Protocol
+from typing import Generic, Text, TypeAlias, TYPE_CHECKING, TypeVar, Protocol
 import uuid
 
 # Third-party library imports
@@ -23,6 +23,11 @@ if TYPE_CHECKING:
 __all__ = ["doc", "Doc", "ngrams", "Token", "Span"]
 
 
+TokenDict: TypeAlias = dict[str, str | int]
+
+DocDict: TypeAlias = dict[str, str | int | list[TokenDict]]
+
+
 @dataclass(slots=True)
 class Token:
     lexel: str
@@ -30,24 +35,11 @@ class Token:
     grammel: str
     form: str
     stripped_form: str
+    sequence: int
     _pos: POS
     _model: Model | None = field(repr=False, default=None)
     _embedding: np.ndarray = field(init=False, repr=False)
     _uuid: uuid.UUID = field(init=False, repr=False)
-
-    def asdict(self) -> dict[str, str | np.ndarray | None]:
-        result: dict[str, str | np.ndarray | None] = {
-            "id": self.id,
-            "lexel": self.lexel,
-            "stripped_lexel": self.stripped_lexel,
-            "grammel": self.grammel,
-            "form": self.form,
-            "stripped_form": self.stripped_form,
-            "pos": self.pos,
-            "one_hot_pos_vector": self.one_hot_pos_vector,
-            "fast_text_embedding": self.embedding,
-        }
-        return result
 
     def __len__(self) -> int:
         return 1
@@ -57,7 +49,7 @@ class Token:
         return self._pos.name
 
     @property
-    def embedding(self) -> np.ndarray | None:
+    def embedding(self) -> npt.NDArray[np.float32] | None:
         if self._model is None:
             return None
         if not hasattr(self, "_embedding"):
@@ -79,6 +71,20 @@ class Token:
             return False
         return True
 
+    # NOTE: embedding vectors are large and pos one-hot vectors are redundant
+    def asdict(self) -> TokenDict:
+        result: TokenDict = {
+            "id": self.id,
+            "lexel": self.lexel,
+            "stripped_lexel": self.stripped_lexel,
+            "grammel": self.grammel,
+            "form": self.form,
+            "stripped_form": self.stripped_form,
+            "sequence": self.sequence,
+            "pos": self.pos,
+        }
+        return result
+
 
 def doc(
     elems: list[TagLine], model: Model | None = None, label: str | None = None
@@ -93,16 +99,16 @@ def doc(
                 grammel=e.grammel,
                 form=e.form,
                 stripped_form=e.stripped_form,
+                sequence=i,
                 _pos=e.pos,
                 _model=model,
             )
-            for e in elems
+            for i, e in enumerate(elems, start=0)
         ],
     )
     return result
 
 
-# TODO: Add asdict() function
 class Doc:
     """Doc object representing a single LAEME text."""
 
@@ -120,7 +126,7 @@ class Doc:
 
     def __getitem__(self, i: slice | int) -> Token | Span[Token]:
         if isinstance(i, int):
-            return deepcopy(self.tokens[i])
+            return copy(self.tokens[i])
         else:
             return Span[Token](self.tokens[i])
 
@@ -143,6 +149,15 @@ class Doc:
             [w.stripped_form if strip else w.form for w in self._elems]
         )
 
+    def asdict(self) -> DocDict:
+        result: DocDict = {
+            "id": self.id,
+            "label": self.label,
+            "length": len(self),
+            "tokens": [t.asdict() for t in self._elems],
+        }
+        return result
+
 
 T = TypeVar("T", covariant=True)
 
@@ -161,7 +176,7 @@ class Span(Generic[T]):
 
     def __getitem__(self, i: slice | int) -> T | Span[T]:
         if isinstance(i, int):
-            return deepcopy(self._elems[i])
+            return copy(self._elems[i])
         else:
             return Span[T](self._elems.copy()[i])
 
