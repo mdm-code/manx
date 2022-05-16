@@ -3,7 +3,7 @@
 # Standard library imports
 from __future__ import annotations
 from pathlib import Path
-from typing import TextIO, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from os import PathLike
@@ -48,32 +48,18 @@ def load(
         (f.stem, f.as_io()) for f in files if f.type == corpus.FileType.Tags
     ]
 
-    def _collate_doc(label: str, file: TextIO) -> nlp.Doc:
-        parser: parsing.TagParser = parsing.TagParser()
-        result = nlp.Doc(
-            label=label,
-            elems=[
-                nlp.Token(
-                    lexel=l.lexel,
-                    stripped_lexel=l.stripped_lexel,
-                    grammel=l.grammel,
-                    form=l.form,
-                    stripped_form=l.stripped_form,
-                    _pos=l.pos,
-                    _model=model,
-                )
-                for l in parser.parse(file)
-            ],
-        )
-        return result
+    parser: parsing.TagParser = parsing.TagParser()
 
     if verbose:
         result = [
-            _collate_doc(label, file)
+            nlp.doc(list(parser.parse(file)), model=model, label=label)
             for label, file in tqdm(
                 source_files, desc="parsing LAEME tag files"
             )
         ]
     else:
-        result = [_collate_doc(label, file) for label, file in source_files]
+        result = [
+            nlp.doc(list(parser.parse(file)), model=model, label=label)
+            for label, file in source_files
+        ]
     return result
