@@ -21,21 +21,24 @@ __all__ = ["load"]
 
 def load(
     *,
-    model_path: PathLike[str],
+    model_path: PathLike[str] | None,
     from_web: bool = False,
     root: str = "",
     verbose: bool = False,
 ) -> list[nlp.Doc]:
     """Load LAEME corpus data."""
-    try:
-        model = embedding.load(model_path)
-    except ValueError:
-        print(
-            f"failed to load {model_path} FastText model! "
-            "Word embeddings will not be computed.",
-            file=sys.stderr,
-        )
+    if model_path is None:
         model = None
+    else:
+        try:
+            model = embedding.load(model_path)
+        except ValueError:
+            print(
+                f"failed to load {model_path} FastText model! "
+                "Word embeddings will not be computed.",
+                file=sys.stderr,
+            )
+            model = None
 
     if from_web:
         downloader = corpus.Downloader()

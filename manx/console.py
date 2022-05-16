@@ -55,7 +55,7 @@ def main():
         "-m",
         "--model",
         help="fastText model file path",
-        default="laeme.bin",
+        required=False,
     )
     parse.add_argument(
         "-f",
