@@ -1,13 +1,13 @@
 """
-Doc module contains the representation of a single corpus text for the purpose
+Tokens module contains building blocks of a single corpus text for the purpose
 of natural language processing.
 """
 
 # Standard library imports
 from __future__ import annotations
-from copy import copy
+from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Text, TYPE_CHECKING, TypeVar, Protocol
+from typing import Generic, Text, TYPE_CHECKING, TypeVar, Protocol
 import uuid
 
 # Third-party library imports
@@ -16,10 +16,10 @@ import numpy as np
 # Local library imports
 if TYPE_CHECKING:
     from manx.embedding import Model
-    from manx.parsing import POS
+    from manx.parsing import POS, TagLine
 
 
-__all__ = ["Doc", "ngrams", "Token", "Span"]
+__all__ = ["doc", "Doc", "ngrams", "Token", "Span"]
 
 
 @dataclass(slots=True)
@@ -32,6 +32,9 @@ class Token:
     _pos: POS
     _model: Model | None = field(repr=False, default=None)
     _embedding: np.ndarray = field(init=False, repr=False)
+
+    def __len__(self) -> int:
+        return 1
 
     @property
     def pos(self) -> str:
@@ -46,10 +49,30 @@ class Token:
         return self._embedding
 
 
-# TODO: move classes to separate modules
-# TODO: add constructor function for Doc -- move it from loading
+def doc(
+    elems: list[TagLine], model: Model | None = None, label: str | None = None
+) -> Doc:
+    """Assemble Doc object representing a single LAEME text."""
+    result = Doc(
+        label=label,
+        elems=[
+            Token(
+                lexel=e.lexel,
+                stripped_lexel=e.stripped_lexel,
+                grammel=e.grammel,
+                form=e.form,
+                stripped_form=e.stripped_form,
+                _pos=e.pos,
+                _model=model,
+            )
+            for e in elems
+        ],
+    )
+    return result
+
+
 class Doc:
-    """Doc object representing a single LAEME document."""
+    """Doc object representing a single LAEME text."""
 
     def __init__(self, elems: list[Token], label: str | None = None) -> None:
         self._label = label if label else ""
@@ -63,8 +86,11 @@ class Doc:
     def __len__(self) -> int:
         return len(self._elems)
 
-    def __getitem__(self, i: slice | int) -> Span:
-        return Span(self.words[i])
+    def __getitem__(self, i: slice | int) -> Token | Span[Token]:
+        if isinstance(i, int):
+            return deepcopy(self.tokens[i])
+        else:
+            return Span[Token](self.tokens[i])
 
     @property
     def label(self) -> str:
@@ -78,7 +104,7 @@ class Doc:
         return self._uuid.hex
 
     @property
-    def words(self) -> list[Token]:
+    def tokens(self) -> list[Token]:
         return self._elems.copy()
 
     def text(self, *, strip: bool = False) -> Text:
@@ -87,10 +113,13 @@ class Doc:
         )
 
 
-class Span:
+T = TypeVar("T", covariant=True)
+
+
+class Span(Generic[T]):
     """A slice of Doc object."""
 
-    def __init__(self, elems: list[Token] | Token) -> None:
+    def __init__(self, elems: T | list[T]) -> None:
         if isinstance(elems, list):
             self._elems = elems
         else:
@@ -99,22 +128,29 @@ class Span:
     def __len__(self) -> int:
         return len(self._elems)
 
-    def __getitem__(self, i: slice | int) -> Token | Span:
+    def __getitem__(self, i: slice | int) -> T | Span[T]:
         if isinstance(i, int):
-            return copy(self._elems[i])
+            return deepcopy(self._elems[i])
         else:
-            return Span(self._elems.copy()[i])
-
-
-T = TypeVar("T", covariant=True)
+            return Span[T](self._elems.copy()[i])
 
 
 class Sequenced(Protocol[T]):
-    def __getitem__(self, i: slice | int) -> T | list[T]:
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+    def __getitem__(self, i: slice | int) -> T | Span[T]:
         raise NotImplementedError
 
 
-def ngrams(source: Sequenced[Token], *, n: int = 3) -> list[tuple[Token, ...]]:
+def ngrams(
+    source: Token | Sequenced[Token], *, n: int = 3
+) -> list[tuple[Token, ...]]:
+    if isinstance(source, Token):
+        if n == 1:
+            return [(source,)]
+        else:
+            return []
     result: list[tuple[Token, ...]] = list(
         zip(*[source[n:] for n in range(n)])  # type: ignore
     )
