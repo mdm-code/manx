@@ -5,6 +5,7 @@ of natural language processing.
 
 # Standard library imports
 from __future__ import annotations
+from copy import copy
 from dataclasses import dataclass, field
 from typing import Text, TYPE_CHECKING, TypeVar, Protocol
 import uuid
@@ -45,6 +46,8 @@ class Token:
         return self._embedding
 
 
+# TODO: move classes to separate modules
+# TODO: add constructor function for Doc -- move it from loading
 class Doc:
     """Doc object representing a single LAEME document."""
 
@@ -96,8 +99,11 @@ class Span:
     def __len__(self) -> int:
         return len(self._elems)
 
-    def __getitem__(self, i: slice | int) -> Token | list[Token]:
-        return self._elems.copy()[i]
+    def __getitem__(self, i: slice | int) -> Token | Span:
+        if isinstance(i, int):
+            return copy(self._elems[i])
+        else:
+            return Span(self._elems.copy()[i])
 
 
 T = TypeVar("T", covariant=True)
