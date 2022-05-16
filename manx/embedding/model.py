@@ -1,6 +1,5 @@
 # Standard library imports
 from __future__ import annotations
-from contextlib import redirect_stderr
 from dataclasses import asdict, dataclass
 import multiprocessing
 from os import PathLike
