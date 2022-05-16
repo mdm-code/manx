@@ -7,6 +7,10 @@ import enum
 import itertools
 from typing import Iterable, Generator, Protocol, TextIO, TypeAlias
 
+# Third-party library imports
+import numpy as np
+from numpy import typing as npt
+
 # Local library imports
 from .token import T, Token
 from .word import Word
@@ -45,6 +49,13 @@ class POS(enum.Enum):
     Num = 9
     Int = 10
     Neg = 11
+
+    @property
+    def one_hot_vector(self) -> npt.NDArray[np.uint8]:
+        shape = len(type(self))
+        vec = np.zeros(shape, dtype=np.uint8)
+        np.put(vec, self.value, 1)
+        return vec
 
 
 class POSTagger:

@@ -3,7 +3,8 @@
 # Standard library imports
 from __future__ import annotations
 import enum
-from typing import TextIO, TYPE_CHECKING
+import json
+from typing import Text, TextIO, TYPE_CHECKING
 
 # Local library imports
 if TYPE_CHECKING:
@@ -20,20 +21,25 @@ class WriteFormatError(Exception):
 class Format(str, enum.Enum):
     FullText = "full"
     StripText = "strip"
-    # TODO: Write out parsed corpus to JSON for use with jq
-    JSON = "json"
+    JSONLines = "jsonlines"
+
+
+def marshall_output(docs: list[nlp.Doc], fmt: Format) -> Text:
+    match fmt:
+        case Format.FullText:
+            result = "\n".join(d.text(strip=False) for d in docs)
+        case Format.StripText:
+            result = "\n".join(d.text(strip=True) for d in docs)
+        case Format.JSONLines:
+            result = json.dumps([d.asdict() for d in docs])
+        case _:
+            raise WriteFormatError(f"{fmt.value} formatting is not supported")
+    return result
 
 
 def write(
     fp: TextIO, docs: list[nlp.Doc], fmt: Format = Format.StripText
-) -> None:
+) -> int:
     """Write out corpus contents to target file in a given format."""
-    match fmt:
-        case Format.FullText:
-            lines = [d.text(strip=False) + "\n" for d in docs]
-            fp.writelines(lines)
-        case Format.StripText:
-            lines = [d.text(strip=True) + "\n" for d in docs]
-            fp.writelines(lines)
-        case _:
-            raise WriteFormatError(f"{fmt} is not supported")
+    output = marshall_output(docs, fmt)
+    return fp.write(output)
