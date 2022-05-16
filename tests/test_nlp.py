@@ -8,7 +8,7 @@ import pytest
 
 # Local library imports
 from manx import parsing
-from manx.nlp import doc
+from manx.nlp import tokens
 from .test_parsing import tag_file_sample
 
 
@@ -24,21 +24,21 @@ def parsed() -> list[parsing.TagLine]:
 def test_doc_words_immutable(parsed: list[parsing.TagLine]) -> None:
     """Verify if words are returned as a copy upon each call."""
     label = "tituslang2t"
-    t = doc.Doc(parsed, label)
-    assert t.words is not t.words
+    t = tokens.doc(parsed, label=label)
+    assert t.tokens is not t.tokens
 
 
 def test_doc_id_uniqueness(parsed: list[parsing.TagLine]) -> None:
     """Check if IDs differ for two different objects."""
-    t1 = doc.Doc(parsed)
-    t2 = doc.Doc(parsed)
+    t1 = tokens.doc(parsed)
+    t2 = tokens.doc(parsed)
     assert t1.id != t2.id
 
 
 def test_doc_equality(parsed: list[parsing.TagLine]) -> None:
     """Each Doc object is assigned a unique UUID used in equality check."""
-    t1 = doc.Doc(parsed)
-    t2 = doc.Doc(parsed)
+    t1 = tokens.doc(parsed)
+    t2 = tokens.doc(parsed)
     assert t1 != t2
 
 @pytest.mark.parametrize(
@@ -52,7 +52,7 @@ def test_doc_output(
     parsed: list[parsing.TagLine], strip: bool, want: str
 ) -> None:
     """Verify regular and stripped text output."""
-    t = doc.Doc(parsed, "tituslang2t")
+    t = tokens.doc(parsed, label="tituslang2t")
     assert t.text(strip=strip) == want
 
 
@@ -70,7 +70,7 @@ def test_doc_getitem(
     tag_file_sample: StringIO, s: slice, length: int
 ) -> None:
     parser = parsing.TagParser()
-    d = doc.Doc(list(parser.parse(tag_file_sample)))
+    d = tokens.doc(list(parser.parse(tag_file_sample)))
     span = d[s]
     assert len(span) == length
 
@@ -87,6 +87,6 @@ def test_doc_getitem(
 def test_ngrams(n: int, want: int, tag_file_sample: StringIO) -> None:
     """Check if the output ngram list has the expected length."""
     parser = parsing.TagParser()
-    d = doc.Doc(list(parser.parse(tag_file_sample)))
-    ngrms = doc.ngrams(d[:], n=n)
+    d = tokens.doc(list(parser.parse(tag_file_sample)))
+    ngrms = tokens.ngrams(d[:], n=n)
     assert len(ngrms) == want
