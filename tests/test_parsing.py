@@ -709,10 +709,12 @@ def test_pos_tagging(lexel: str, pos: tags.POS) -> None:
         ("ha:tan{c}", "ha:tan"),
         ("nor[neg]", "nor"),
         ("nor[or]", "nor"),
+        ("A<pr", "A"),
+        ("cj>=", "cj"),
     ]
 )
 def test_lexel_simplification(lexel: str, want: str) -> None:
-    assert tags.TagLine("", lexel, "", "").stripped_lexel == want
+    assert tags.TagLine("$", lexel, "", "").stripped_lexel == want
 
 
 @pytest.mark.parametrize(
@@ -762,6 +764,35 @@ def test_tag_pos_inference(instance: tags.TagLine, want: tags.POS) -> None:
 )
 def test_format_tag_as_line(instance: tags.TagLine, want: bool) -> None:
     assert instance.line == want
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        (
+            tags.TagLine(*["$", "", "P21N", "wE"]),
+            "P21N",
+        ),
+        (
+            tags.TagLine(*["$", "thank{g}", "nOd", "yONC"]),
+            "thank{g}",
+        ),
+        (
+            tags.TagLine(*["$", "be:tan", "vpp", "I+BET"]),
+            "be:tan",
+        ),
+        (
+            tags.TagLine(*["'", "", "", "*IAMES"]),
+            "***",
+        ),
+        (
+            tags.TagLine(*[";", "", "", "ENGLELOND"]),
+            "***",
+        ),
+    ]
+)
+def test_proper_place_name_lemma(instance: tags.TagLine, want: str) -> None:
+    assert instance.lexel == want
 
 
 @pytest.mark.parametrize(

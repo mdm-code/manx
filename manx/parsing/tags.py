@@ -127,18 +127,28 @@ class TagLine:
         form: str,
     ) -> None:
         self._prefix = prefix
-        # NOTE: Carry over grammel to lexel if there is no lexel
-        self.lexel = lexel if lexel else grammel
-        self.stripped_lexel = self._strip(lexel) if lexel else grammel
-        self.grammel = grammel
+        match self._prefix:
+            case "'" | ";":
+                self.lexel = "***"
+                self.stripped_lexel = "***"
+                self.grammel = "***"
+            case "$":
+                # NOTE: Carry over grammel to lexel if there is no lexel
+                self.lexel = lexel if lexel else grammel
+                self.stripped_lexel = (
+                    self._strip(lexel) if lexel else self._strip(grammel)
+                )
+                self.grammel = grammel
+            case _:
+                raise AttributeError(f"unknown tag line prefix: {prefix}")
         self._form = Word(
             Token(
-                # NOTE: Only ; and ' are used as prefixes, $ is not
+                # NOTE: Only ; and ' are used as prefixes in text, $ is not
                 text=form if prefix == "$" else prefix + form,
                 type=T.REGULAR,
             )
         )
-        match prefix:
+        match self._prefix:
             case "$":
                 self.line = f"{prefix}{lexel}/{grammel}_{form}"
             case _:
@@ -179,6 +189,10 @@ class TagLine:
         if (idx := lexel.find("{")) != -1:
             return lexel[:idx]
         if (idx := lexel.find("[")) != -1:
+            return lexel[:idx]
+        if (idx := lexel.find("<")) != -1:
+            return lexel[:idx]
+        if (idx := lexel.find(">")) != -1:
             return lexel[:idx]
         return lexel
 
