@@ -711,6 +711,9 @@ def test_pos_tagging(lexel: str, pos: tags.POS) -> None:
         ("nor[or]", "nor"),
         ("A<pr", "A"),
         ("cj>=", "cj"),
+        ("P11N+H", "P11N"),
+        ("neg-v", "neg"),
+        ("P11G-covpl+C", "P11G"),
     ]
 )
 def test_lexel_simplification(lexel: str, want: str) -> None:

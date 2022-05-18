@@ -187,13 +187,17 @@ class TagLine:
 
     def _strip(self, lexel: str) -> str:
         if (idx := lexel.find("{")) != -1:
-            return lexel[:idx]
+            return self._strip(lexel[:idx])
         if (idx := lexel.find("[")) != -1:
-            return lexel[:idx]
+            return self._strip(lexel[:idx])
         if (idx := lexel.find("<")) != -1:
-            return lexel[:idx]
+            return self._strip(lexel[:idx])
         if (idx := lexel.find(">")) != -1:
-            return lexel[:idx]
+            return self._strip(lexel[:idx])
+        if (idx := lexel.find("-")) != -1:
+            return self._strip(lexel[:idx])
+        if (idx := lexel.find("+")) != -1:
+            return self._strip(lexel[:idx])
         return lexel
 
 
