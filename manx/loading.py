@@ -56,9 +56,7 @@ def load(
     if verbose:
         result = [
             nlp.doc(list(parser.parse(file)), model=model, label=label)
-            for label, file in tqdm(
-                source_files, desc="parsing LAEME tag files"
-            )
+            for label, file in tqdm(source_files, desc="parsing tag files")
         ]
     else:
         result = [
