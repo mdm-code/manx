@@ -496,7 +496,7 @@ def test_tags_line_valid(instance: str, want: bool) -> None:
         ),
         (
             "$&/cj_&",
-            tags.TagLine(*["$", "&", "cj", "&"]),
+            tags.TagLine(*["$", "and", "cj", "&"]),
         ),
         (
             "$/P21N_wE",
@@ -791,6 +791,26 @@ def test_format_tag_as_line(instance: tags.TagLine, want: bool) -> None:
         (
             tags.TagLine(*[";", "", "", "ENGLELOND"]),
             "***",
+        ),
+        (
+            tags.TagLine(*["$", "", "A<pr", "A"]),
+            "an",
+        ),
+        (
+            tags.TagLine(*["$", "", "TN", "dE"]),
+            "the",
+        ),
+        (
+            tags.TagLine(*["$", "&", "cj", "&"]),
+            "and",
+        ),
+        (
+            tags.TagLine(*["$", "", "TOd-ad", "TE"]),
+            "the",
+        ),
+        (
+            tags.TagLine(*["$", "", "D-cpv", "yE"]),
+            "the",
         ),
     ]
 )

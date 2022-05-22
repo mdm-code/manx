@@ -3,6 +3,7 @@
 # Standard library imports
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 import enum
 import itertools
 from typing import Iterable, Generator, Protocol, TextIO, TypeAlias
@@ -116,6 +117,22 @@ class POSTagger:
         return POS.Undef
 
 
+@dataclass(slots=True, frozen=True, eq=False)
+class _LineRepr:
+    prefix: str
+    lexel: str
+    grammel: str
+    form: str
+
+    def __str__(self) -> str:
+        """Represent initial parameters as tag file line."""
+        match self.prefix:
+            case "$":
+                return f"{self.prefix}{self.lexel}/{self.grammel}_{self.form}"
+            case _:
+                return f"{self.prefix}_{self.form}"
+
+
 class TagLine:
     """TagLine represents a single valid line from .TAG corpus file."""
 
@@ -126,6 +143,7 @@ class TagLine:
         grammel: str,
         form: str,
     ) -> None:
+        self._line_repr = _LineRepr(prefix, lexel, grammel, form)
         self._prefix = prefix
         match self._prefix:
             case "'" | ";":
@@ -133,10 +151,13 @@ class TagLine:
                 self.stripped_lexel = "***"
                 self.grammel = "***"
             case "$":
+                lexel = "and" if (lexel and lexel.strip() == "&") else lexel
                 # NOTE: Carry over grammel to lexel if there is no lexel
-                self.lexel = lexel if lexel else grammel
+                self.lexel = lexel if lexel else self._repl(grammel)
                 self.stripped_lexel = (
-                    self._strip(lexel) if lexel else self._strip(grammel)
+                    self._strip(lexel)
+                    if lexel
+                    else self._strip(self._repl(grammel))
                 )
                 self.grammel = grammel
             case _:
@@ -148,11 +169,6 @@ class TagLine:
                 type=T.REGULAR,
             )
         )
-        match self._prefix:
-            case "$":
-                self.line = f"{prefix}{lexel}/{grammel}_{form}"
-            case _:
-                self.line = f"{prefix}_{form}"
         self.tagger = POSTagger
 
     def __eq__(self, other: object) -> bool:
@@ -182,6 +198,10 @@ class TagLine:
         return self._form.text
 
     @property
+    def line(self) -> str:
+        return str(self._line_repr)
+
+    @property
     def stripped_form(self) -> str:
         return self._form.stripped_text
 
@@ -199,6 +219,21 @@ class TagLine:
         if (idx := lexel.find("+")) != -1:
             return self._strip(lexel[:idx])
         return lexel
+
+    def _repl(self, lexel: str) -> str:
+        """Replace some of the common lexels with more familiar forms."""
+        try:
+            match lexel[0]:
+                case "A":
+                    return "an"
+                case "T":
+                    return "the"
+                case _:
+                    if lexel.startswith("D-cpv"):
+                        return "the"
+                    return lexel
+        except IndexError:
+            return lexel
 
 
 class TagParser:
