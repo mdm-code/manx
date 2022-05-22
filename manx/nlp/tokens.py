@@ -115,6 +115,7 @@ class Doc:
     def __init__(self, elems: list[Token], label: str | None = None) -> None:
         self._label = label if label else ""
         self._elems = elems
+        self._cur = 0
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
@@ -123,6 +124,19 @@ class Doc:
 
     def __len__(self) -> int:
         return len(self._elems)
+
+    def __iter__(self) -> Doc:
+        return self
+
+    def __next__(self) -> Token:
+        try:
+            result = copy(self._elems[self._cur])
+        except IndexError:
+            self._cur = 0
+            raise StopIteration
+        else:
+            self._cur += 1
+            return result
 
     def __getitem__(self, i: slice | int) -> Token | Span[Token]:
         if isinstance(i, int):
