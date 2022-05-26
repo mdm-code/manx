@@ -10,7 +10,7 @@ from numpy import typing as npt
 import pytest
 
 # Local library imports
-from manx.parsing import dicts, texts, tags, parser
+from manx.parsing import dicts, texts, tags, parser, prons
 
 
 @pytest.fixture
@@ -857,3 +857,16 @@ def test_pos_enum_one_hot_encoding(
     instance: tags.POS, want: npt.NDArray[np.uint8]
 ) -> None:
     assert np.array_equal(instance.one_hot_vector, want)
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        ("P01<pr{rh}", "P01<pr"),
+        ("P11G-av+C", "P11G-av"),
+        ("P23G-voc<{rh}+C", "P23G-voc<"),
+    ]
+)
+def test_init_memo(instance: str, want: str) -> None:
+    have = prons.Memo(instance).form
+    assert have == want
