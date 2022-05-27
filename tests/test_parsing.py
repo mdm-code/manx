@@ -863,10 +863,22 @@ def test_pos_enum_one_hot_encoding(
     "instance, want",
     [
         ("P01<pr{rh}", "P01<pr"),
-        ("P11G-av+C", "P11G-av"),
-        ("P23G-voc<{rh}+C", "P23G-voc<"),
+        ("P11G-av+C", "P11G"),
+        ("P23G-voc<{rh}+C", "P23G"),
+        ("P02G-av+C{rh}", "P02G"),
+        ("P13GMpnplOd", "P13GMOd"),
+        ("P13GMpnplOd{rh}", "P13GMOd"),
+        ("P12-voc-ad", "P12"),
+        ("P01<pr<{rh}", "P01<pr"),
+        ("P12Gint+C", "P12G"),
+        ("P13GI-Gn", "P13GI"),
+        ("P21<pr>", "P21<pr"),
+        ("P12GOdpl-as<", "P12GOd"),
+        ("P13<prM>=", "P13<prM"),
+        ("P23N>={rh}", "P23N"),
     ]
 )
-def test_init_memo(instance: str, want: str) -> None:
-    have = prons.Memo(instance).form
+def test_pronoun_pruning(instance: str, want: str) -> None:
+    pruner = prons.Pruner()
+    have = pruner.prune(instance)
     assert have == want
