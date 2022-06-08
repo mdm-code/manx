@@ -15,11 +15,44 @@ class Pruner:
 
     @classmethod
     def prune(cls, form: str) -> str:
+        # NOTE: Do not reorder if statements unless you know what you're doing
+        # NOTE: X stands for any single ASCII codepoint
         if (idx := form.find("{rh}")) != -1:
             offset = len("{rh}")
             return cls.prune(form[:idx] + form[idx + offset :])
         if (idx := form.find("+")) != -1:
-            offset = len("+X")  # NOTE: X stands for any single ASCII codepoint
+            offset = len("+X")
+            return cls.prune(form[:idx] + form[idx + offset :])
+        if (idx := form.find("-voc")) != -1:
+            offset = len("-voc")
+            return cls.prune(form[:idx] + form[idx + offset :])
+        if (idx := form.find("-a")) != -1:
+            offset = len("-aX")
+            return cls.prune(form[:idx] + form[idx + offset :])
+        if (idx := form.find("-Gn")) != -1:
+            offset = len("-Gn")
+            return cls.prune(form[:idx] + form[idx + offset :])
+        if (idx := form.find("pn")) != -1:
+            offset = len("pn")
+            return cls.prune(form[:idx] + form[idx + offset :])
+        if (idx := form.find("pl")) != -1:
+            offset = len("pl")
+            return cls.prune(form[:idx] + form[idx + offset :])
+        if (idx := form.find("int")) != -1:
+            offset = len("int")
+            return cls.prune(form[:idx] + form[idx + offset :])
+        if (idx := form.find(">=")) != -1:
+            offset = len(">=")
+            return cls.prune(form[:idx] + form[idx + offset :])
+        if (idx := form.rfind("<")) != -1 and form[
+            idx : idx + len("<pr")
+        ] != "<pr":
+            offset = len("<")
+            return cls.prune(form[:idx] + form[idx + offset :])
+        if (idx := form.rfind(">")) != -1 and form[
+            idx : idx + len(">pr")
+        ] != "<pr":
+            offset = len(">")
             return cls.prune(form[:idx] + form[idx + offset :])
         return form
 
