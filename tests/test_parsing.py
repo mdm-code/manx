@@ -882,3 +882,57 @@ def test_pronoun_pruning(instance: str, want: str) -> None:
     pruner = prons.Pruner()
     have = pruner.prune(instance)
     assert have == want
+
+
+@pytest.mark.parametrize(
+    "instance, want",
+    [
+        (("P01>pr", "VS"), "us"),
+        (("P01<pr", "US"), "us"),
+        (("P01X", "VSSELUEN"), "usself"),
+        (("P01Oi", "US"), "us"),
+        (("P01Od", "VS"), "us"),
+        (("P01N", "WE"), "we"),
+        (("P01G", "VRE"), "our"),
+        (("P02<pr", "YOU"), "you"),
+        (("P02>pr", "YOU"), "you"),
+        (("P02Od", "zOU"), "you"),
+        (("P02Oi", "zU"), "you"),
+        (("P02OdX", "EOV"), "you"),
+        (("P02G", "OWER"), "your"),
+        (("P02N", "YE"), "you"),
+        (("P11<pr", "ME"), "me"),
+        (("P11>pr{rh}", "ME"), "me"),
+        (("P11>pr", "ME"), "me"),
+        (("P11G+H", "MY"), "my"),
+        (("P11G-voc+C", "MIn"), "mine"),
+        (("P11G-av+C", "MI"), "my"),
+        (("P11G-voc<{rh}", "MINE"), "mine"),
+        (("P11G<prpl+C", "MYNE"), "mine"),
+        (("P11G<pr", "MI"), "my"),
+        (("P11GG+V", "MINES"), "mine"),
+        (("P11GN<{rh}", "MI"), "my"),
+        (("P11GOdpl+H", "MYn"), "mine"),
+        (("P11N", "IK~"), "I"),
+        (("P11N{rh}", "HI"), "I"),
+        (("P11N+V{rh}", "I"), "I"),
+        (("P11Oi", "MI"), "me"),
+        (("P11Od{rh}", "ME"), "me"),
+        (("P11Oi<{rh}", "ME"), "me"),
+        (("P11<pr+ward", "MEWARD"), "meward"),
+        (("P11NX", "ICSULF"), "meself"),
+        (("P11<prX", "ME"), "me"),
+        (("P11<prX", "MESELUEn"), "meself"),
+        (("P11GX", "MINESSULUES"), "meself"),
+        (("P11MX", "ME"), "me"),
+        (("P11MX<{rh}", "ME"), "me"),
+        (("P11OdX{rh}", "ME"), "me"),
+        (("P11X", "MISULF"), "meself"),
+        (("P11OiX", "ESULFUm"), "meself"),
+        (("P11OdX{rh}", "ME"), "me"),
+    ]
+)
+def test_pronoun_parsing(instance: tuple[str, str], want: str) -> None:
+    p = prons.Pronoun(*instance)
+    have = p.mapped
+    assert have == want
