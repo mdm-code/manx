@@ -26,7 +26,9 @@ class Pruner:
         if (idx := form.find("-voc")) != -1:
             offset = len("-voc")
             return cls.prune(form[:idx] + form[idx + offset :])
-        if (idx := form.find("-a")) != -1:
+        if (idx := form.find("-a")) != -1 and form[
+            idx : idx + len("-av")
+        ] != "-av":
             offset = len("-aX")
             return cls.prune(form[:idx] + form[idx + offset :])
         if (idx := form.find("-Gn")) != -1:
@@ -60,59 +62,101 @@ class Pruner:
 class PronounMapper:
     """PronounMapper swaps LAEME pronoun grammels for familiar labels."""
 
-    @classmethod
-    def __call__(cls, p: Pronoun) -> str:
-        return cls.infer(p)
+    def __init__(self) -> None:
+        self.callables = {
+            "P01": self.infer_P01,
+            "P02": self.infer_P02,
+            "P11": self.infer_P11,
+            "P12": self.infer_P12,
+        }
 
-    @classmethod
-    def infer(cls, p: Pronoun) -> str:
+    def __call__(self, p: Pronoun) -> str:
+        return self.infer(p)
+
+    def infer(self, p: Pronoun) -> str:
+        # TODO: this can be handled w/o match statement
+        # callable = self.callables.get(p.base, None)
+        # if callable: return callable(p)
         match p.base:
             case "P01":
-                if "G" in p.remainder:
-                    return "our"
-                if "N" in p.remainder:
-                    return "we"
-                if "X" in p.remainder:
-                    # NOTE: account for words like VSSELVEN
-                    if len(p.form) > 3:
-                        return "usself"
-                    return "us"
-                if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od"]):
-                    return "us"
+                return self.callables[p.base](p)
             case "P02":
-                if "G" in p.remainder:
-                    return "your"
-                if "N" in p.remainder:
-                    return "you"
-                if any(
-                    v in p.remainder for v in ["<pr", ">pr", "Oi", "Od", "X"]
-                ):
-                    return "you"
+                return self.callables[p.base](p)
             case "P11":
-                if "X" in p.remainder:
-                    if len(p.form) > 2:
-                        return "meself"
-                    return "me"
-                if "G" in p.remainder:
-                    if (
-                        len(p.form) > 2 and any(
-                            v in p.form for v in ["n", "N"]
-                        )
-                    ):
-                        return "mine"
-                    return "my"
-                if "N" in p.remainder:
-                    return "I"
-                if "+ward" in p.remainder:
-                    return "meward"
-                if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od"]):
-                    return "me"
+                return self.callables[p.base](p)
             case "P12":
                 # TODO: Implement the second person singular
-                return "you"
+                return self.callables[p.base](p)
             case _:
                 return ""
-        return ""
+
+    def infer_P01(self, p: Pronoun) -> str:
+        if "G" in p.remainder:
+            return "our"
+        if "N" in p.remainder:
+            return "we"
+        if "X" in p.remainder:
+            # NOTE: account for words like VSSELVEN
+            if len(p.form) > 3:
+                return "usself"
+            return "us"
+        if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od"]):
+            return "us"
+        return "we"
+
+    def infer_P02(self, p: Pronoun) -> str:
+        if "G" in p.remainder:
+            return "your"
+        if "N" in p.remainder:
+            return "you"
+        if any(
+            v in p.remainder for v in ["<pr", ">pr", "Oi", "Od", "X"]
+        ):
+            return "you"
+        return "you"
+
+    def infer_P11(self, p: Pronoun) -> str:
+        if "+ward" in p.remainder:
+            return "meward"
+        if "X" in p.remainder:
+            if len(p.form) > 2:
+                return "meself"
+            return "me"
+        if "G" in p.remainder:
+            if (
+                len(p.form) > 2 and any(
+                    v in p.form for v in ["n", "N"]
+                )
+            ):
+                return "mine"
+            return "my"
+        if "N" in p.remainder:
+            return "I"
+        if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od"]):
+            return "me"
+        return "I"
+
+    def infer_P12(self, p: Pronoun) -> str:
+        # NOTE: N has to come after G
+        if "+ward" in p.remainder:
+            return "theeward"
+        if "X" in p.remainder:
+            if len(p.form) > 2:
+                return "theeself"
+            return "thee"
+        if "G" in p.remainder:
+            if (
+                len(p.form) > 2 and any(
+                    v in p.form for v in ["n", "N"]
+                )
+            ):
+                return "thine"
+            return "thy"
+        if "N" in p.remainder:
+            return "thou"
+        if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od", "-av"]):
+            return "thee"
+        return "thou"
 
 
 class Pronoun:
