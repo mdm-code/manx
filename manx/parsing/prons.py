@@ -76,24 +76,11 @@ class PronounMapper:
         return self.infer(p)
 
     def infer(self, p: Pronoun) -> str:
-        # TODO: this can be handled w/o match statement
-        # callable = self.callables.get(p.base, None)
-        # if callable: return callable(p)
-        match p.base:
-            case "P01":
-                return self.callables[p.base](p)
-            case "P02":
-                return self.callables[p.base](p)
-            case "P11":
-                return self.callables[p.base](p)
-            case "P12":
-                return self.callables[p.base](p)
-            case "P21":
-                return self.callables[p.base](p)
-            case "P22":
-                return self.callables[p.base](p)
-            case _:
-                return ""
+        try:
+            return self.callables[p.base](p)
+        except KeyError:
+            # NOTE: Fall back to stripped grammel form
+            return p.lexel
 
     def infer_P01(self, p: Pronoun) -> str:
         if "G" in p.remainder:
