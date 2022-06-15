@@ -68,6 +68,8 @@ class PronounMapper:
             "P02": self.infer_P02,
             "P11": self.infer_P11,
             "P12": self.infer_P12,
+            "P21": self.infer_P21,
+            "P22": self.infer_P22,
         }
 
     def __call__(self, p: Pronoun) -> str:
@@ -85,7 +87,10 @@ class PronounMapper:
             case "P11":
                 return self.callables[p.base](p)
             case "P12":
-                # TODO: Implement the second person singular
+                return self.callables[p.base](p)
+            case "P21":
+                return self.callables[p.base](p)
+            case "P22":
                 return self.callables[p.base](p)
             case _:
                 return ""
@@ -109,9 +114,7 @@ class PronounMapper:
             return "your"
         if "N" in p.remainder:
             return "you"
-        if any(
-            v in p.remainder for v in ["<pr", ">pr", "Oi", "Od", "X"]
-        ):
+        if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od", "X"]):
             return "you"
         return "you"
 
@@ -123,11 +126,7 @@ class PronounMapper:
                 return "meself"
             return "me"
         if "G" in p.remainder:
-            if (
-                len(p.form) > 2 and any(
-                    v in p.form for v in ["n", "N"]
-                )
-            ):
+            if len(p.form) > 2 and any(v in p.form for v in ["n", "N"]):
                 return "mine"
             return "my"
         if "N" in p.remainder:
@@ -137,7 +136,6 @@ class PronounMapper:
         return "I"
 
     def infer_P12(self, p: Pronoun) -> str:
-        # NOTE: N has to come after G
         if "+ward" in p.remainder:
             return "theeward"
         if "X" in p.remainder:
@@ -145,11 +143,7 @@ class PronounMapper:
                 return "theeself"
             return "thee"
         if "G" in p.remainder:
-            if (
-                len(p.form) > 2 and any(
-                    v in p.form for v in ["n", "N"]
-                )
-            ):
+            if len(p.form) > 2 and any(v in p.form for v in ["n", "N"]):
                 return "thine"
             return "thy"
         if "N" in p.remainder:
@@ -157,6 +151,58 @@ class PronounMapper:
         if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od", "-av"]):
             return "thee"
         return "thou"
+
+    def infer_P21(self, p: Pronoun) -> str:
+        # NOTE: infer dual number
+        if "D" in p.remainder:
+            if "G" in p.remainder:
+                if len(p.form) > 3:
+                    return "unker"
+                return "unk"
+            if "N" in p.remainder:
+                return "wit"
+            if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od"]):
+                return "unk"
+            return "wit"
+        if "X" in p.remainder:
+            if len(p.form) > 3:
+                return "usself"
+            return "us"
+        if "G" in p.remainder:
+            return "our"
+        if "N" in p.remainder:
+            return "we"
+        if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od"]):
+            return "us"
+        return "we"
+
+    def infer_P22(self, p: Pronoun) -> str:
+        # NOTE: infer dual number
+        if "D" in p.remainder:
+            if "X" in p.remainder:
+                if len(p.form) > 4:
+                    return "inkself"
+                return "ink"
+            if "G" in p.remainder:
+                if len(p.form) > 4:
+                    return "inker"
+                return "ink"
+            if "N" in p.remainder:
+                return "git"
+            if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od"]):
+                return "ink"
+            return "git"
+        if "X" in p.remainder:
+            if len(p.form) > 4:
+                return "youself"
+            return "you"
+        if "G" in p.remainder:
+            return "your"
+        if "N" in p.remainder:
+            return "you"
+        if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od"]):
+            return "you"
+        return "you"
 
 
 class Pronoun:
