@@ -1,4 +1,4 @@
-"""Prons module takes care of LAEME pronoun tagging disambiguation."""
+"""Prons module takes care of LAEME pronoun grammel disambiguation."""
 
 # Standard library imports
 from __future__ import annotations
@@ -68,8 +68,11 @@ class PronounMapper:
             "P02": self.infer_P02,
             "P11": self.infer_P11,
             "P12": self.infer_P12,
+            # TODO: implement P23
+            "P13": lambda x: x,
             "P21": self.infer_P21,
             "P22": self.infer_P22,
+            "P23": self.infer_P23,
         }
 
     def __call__(self, p: Pronoun) -> str:
@@ -83,15 +86,14 @@ class PronounMapper:
             return p.lexel
 
     def infer_P01(self, p: Pronoun) -> str:
+        if "X" in p.remainder:
+            if len(p.form) > 3:
+                return "usself"
+            return "us"
         if "G" in p.remainder:
             return "our"
         if "N" in p.remainder:
             return "we"
-        if "X" in p.remainder:
-            # NOTE: account for words like VSSELVEN
-            if len(p.form) > 3:
-                return "usself"
-            return "us"
         if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od"]):
             return "us"
         return "we"
@@ -140,7 +142,6 @@ class PronounMapper:
         return "thou"
 
     def infer_P21(self, p: Pronoun) -> str:
-        # NOTE: infer dual number
         if "D" in p.remainder:
             if "G" in p.remainder:
                 if len(p.form) > 3:
@@ -164,7 +165,6 @@ class PronounMapper:
         return "we"
 
     def infer_P22(self, p: Pronoun) -> str:
-        # NOTE: infer dual number
         if "D" in p.remainder:
             if "X" in p.remainder:
                 if len(p.form) > 4:
@@ -190,6 +190,19 @@ class PronounMapper:
         if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od"]):
             return "you"
         return "you"
+
+    def infer_P23(self, p: Pronoun) -> str:
+        if "X" in p.remainder:
+            if len(p.form) > 4:
+                return "themself"
+            return "them"
+        if "G" in p.remainder:
+            return "their"
+        if "N" in p.remainder:
+            return "they"
+        if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od"]):
+            return "them"
+        return "they"
 
 
 class Pronoun:
