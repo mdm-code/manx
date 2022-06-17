@@ -68,8 +68,7 @@ class PronounMapper:
             "P02": self.infer_P02,
             "P11": self.infer_P11,
             "P12": self.infer_P12,
-            # TODO: implement P23
-            "P13": lambda x: x,
+            "P13": self.infer_P13,
             "P21": self.infer_P21,
             "P22": self.infer_P22,
             "P23": self.infer_P23,
@@ -141,6 +140,50 @@ class PronounMapper:
             return "thee"
         return "thou"
 
+    def infer_P13(self, p: Pronoun) -> str:
+        # NOTE: F and I should come before M because M has double meaning
+        if "F" in p.remainder:
+            if "X" in p.remainder:
+                if len(p.form) > 4:
+                    return "herself"
+                return "her"
+            if "G" in p.remainder:
+                return "her"
+            if "N" in p.remainder:
+                return "she"
+            if any(
+                v in p.remainder for v in ["<pr", ">pr", "Oi", "Od", "-av"]
+            ):
+                return "her"
+            return "she"
+        if "I" in p.remainder:
+            if "X" in p.remainder:
+                if len(p.form) > 3:
+                    return "itself"
+                return "it"
+            if "G" in p.remainder:
+                return "its"
+            if "N" in p.remainder:
+                return "it"
+            if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od"]):
+                return "it"
+            return "it"
+        if "M" in p.remainder:
+            if "+ward" in p.remainder:
+                return "himward"
+            if "X" in p.remainder:
+                if len(p.form) > 4:
+                    return "himself"
+                return "him"
+            if "G" in p.remainder:
+                return "his"
+            if "N" in p.remainder:
+                return "he"
+            if any(v in p.remainder for v in ["<pr", ">pr", "Oi", "Od"]):
+                return "him"
+            return "he"
+        return "he"
+
     def infer_P21(self, p: Pronoun) -> str:
         if "D" in p.remainder:
             if "G" in p.remainder:
@@ -208,7 +251,7 @@ class PronounMapper:
 class Pronoun:
     def __init__(self, lexel: str, form: str) -> None:
         self._lexel = lexel
-        self._form = form
+        self.form = form
 
         self.pruner = Pruner()
         self.mapper = PronounMapper()
@@ -220,10 +263,6 @@ class Pronoun:
     @property
     def mapped(self) -> str:
         return self.mapper(self)
-
-    @property
-    def form(self) -> str:
-        return self._form
 
     @property
     def base(self) -> str:
