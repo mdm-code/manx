@@ -15,6 +15,7 @@ from numpy import typing as npt
 # Local library imports
 from .token import T, Token
 from .word import Word
+from .prons import Pronoun
 
 
 __all__ = ["POS", "TagLine", "TagParser"]
@@ -145,6 +146,18 @@ class TagLine:
     ) -> None:
         self._line_repr = _LineRepr(prefix, lexel, grammel, form)
         self._prefix = prefix
+
+        self._form = Word(
+            Token(
+                # NOTE: Only ; and ' are used as prefixes in text, $ is not
+                text=form if prefix == "$" else prefix + form,
+                type=T.REGULAR,
+            )
+        )
+
+        self.mapper = Pronoun
+        self.tagger = POSTagger
+
         match self._prefix:
             case "'" | ";":
                 self.lexel = "***"
@@ -162,14 +175,6 @@ class TagLine:
                 self.grammel = grammel
             case _:
                 raise AttributeError(f"unknown tag line prefix: {prefix}")
-        self._form = Word(
-            Token(
-                # NOTE: Only ; and ' are used as prefixes in text, $ is not
-                text=form if prefix == "$" else prefix + form,
-                type=T.REGULAR,
-            )
-        )
-        self.tagger = POSTagger
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
@@ -228,6 +233,8 @@ class TagLine:
                     return "an"
                 case "T":
                     return "the"
+                case "P":
+                    return self.mapper(lexel, self.form).mapped
                 case _:
                     if lexel.startswith("D-cpv"):
                         return "the"
