@@ -4,6 +4,9 @@
 from __future__ import annotations
 
 
+__all__ = ["Pronoun"]
+
+
 class Pruner:
     """Pruner removes unnecessary elements of LAEME pronoun grammels."""
 
