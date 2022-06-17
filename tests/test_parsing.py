@@ -774,7 +774,28 @@ def test_format_tag_as_line(instance: tags.TagLine, want: bool) -> None:
     [
         (
             tags.TagLine(*["$", "", "P21N", "wE"]),
-            "P21N",
+            "we",
+        ),
+
+        (
+            tags.TagLine(*["$", "", "P23Oi", "HEON"]),
+            "them",
+        ),
+        (
+            tags.TagLine(*["$", "", "P11GOdpl+H", "MYn"]),
+            "mine",
+        ),
+        (
+            tags.TagLine(*["$", "", "P22Od", "COw"]),
+            "you",
+        ),
+        (
+            tags.TagLine(*["$", "", "P13OdXM{rh}", "HINE"]),
+            "him",
+        ),
+        (
+            tags.TagLine(*["$", "", "P13OdXM{rh}", "HImZELF"]),
+            "himself",
         ),
         (
             tags.TagLine(*["$", "thank{g}", "nOd", "yONC"]),
