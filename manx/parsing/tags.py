@@ -3,6 +3,7 @@
 # Standard library imports
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 import enum
 import itertools
 from typing import Iterable, Generator, Protocol, TextIO, TypeAlias
@@ -14,6 +15,7 @@ from numpy import typing as npt
 # Local library imports
 from .token import T, Token
 from .word import Word
+from .prons import Pronoun
 
 
 __all__ = ["POS", "TagLine", "TagParser"]
@@ -116,6 +118,22 @@ class POSTagger:
         return POS.Undef
 
 
+@dataclass(slots=True, frozen=True, eq=False)
+class _LineRepr:
+    prefix: str
+    lexel: str
+    grammel: str
+    form: str
+
+    def __str__(self) -> str:
+        """Represent initial parameters as tag file line."""
+        match self.prefix:
+            case "$":
+                return f"{self.prefix}{self.lexel}/{self.grammel}_{self.form}"
+            case _:
+                return f"{self.prefix}_{self.form}"
+
+
 class TagLine:
     """TagLine represents a single valid line from .TAG corpus file."""
 
@@ -126,24 +144,37 @@ class TagLine:
         grammel: str,
         form: str,
     ) -> None:
+        self._line_repr = _LineRepr(prefix, lexel, grammel, form)
         self._prefix = prefix
-        # NOTE: Carry over grammel to lexel if there is no lexel
-        self.lexel = lexel if lexel else grammel
-        self.stripped_lexel = self._strip(lexel) if lexel else grammel
-        self.grammel = grammel
+
         self._form = Word(
             Token(
-                # NOTE: Only ; and ' are used as prefixes, $ is not
+                # NOTE: Only ; and ' are used as prefixes in text, $ is not
                 text=form if prefix == "$" else prefix + form,
                 type=T.REGULAR,
             )
         )
-        match prefix:
-            case "$":
-                self.line = f"{prefix}{lexel}/{grammel}_{form}"
-            case _:
-                self.line = f"{prefix}_{form}"
+
+        self.mapper = Pronoun
         self.tagger = POSTagger
+
+        match self._prefix:
+            case "'" | ";":
+                self.lexel = "***"
+                self.stripped_lexel = "***"
+                self.grammel = "***"
+            case "$":
+                lexel = "and" if (lexel and lexel.strip() == "&") else lexel
+                # NOTE: Carry over grammel to lexel if there is no lexel
+                self.lexel = lexel if lexel else self._repl(grammel)
+                self.stripped_lexel = (
+                    self._strip(lexel)
+                    if lexel
+                    else self._strip(self._repl(grammel))
+                )
+                self.grammel = grammel
+            case _:
+                raise AttributeError(f"unknown tag line prefix: {prefix}")
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
@@ -172,15 +203,44 @@ class TagLine:
         return self._form.text
 
     @property
+    def line(self) -> str:
+        return str(self._line_repr)
+
+    @property
     def stripped_form(self) -> str:
         return self._form.stripped_text
 
     def _strip(self, lexel: str) -> str:
         if (idx := lexel.find("{")) != -1:
-            return lexel[:idx]
+            return self._strip(lexel[:idx])
         if (idx := lexel.find("[")) != -1:
-            return lexel[:idx]
+            return self._strip(lexel[:idx])
+        if (idx := lexel.find("<")) != -1:
+            return self._strip(lexel[:idx])
+        if (idx := lexel.find(">")) != -1:
+            return self._strip(lexel[:idx])
+        if (idx := lexel.find("-")) != -1:
+            return self._strip(lexel[:idx])
+        if (idx := lexel.find("+")) != -1:
+            return self._strip(lexel[:idx])
         return lexel
+
+    def _repl(self, lexel: str) -> str:
+        """Replace some of the common lexels with more familiar forms."""
+        try:
+            match lexel[0]:
+                case "A":
+                    return "an"
+                case "T":
+                    return "the"
+                case "P":
+                    return self.mapper(lexel, self.form).mapped
+                case _:
+                    if lexel.startswith("D-cpv"):
+                        return "the"
+                    return lexel
+        except IndexError:
+            return lexel
 
 
 class TagParser:
