@@ -28,11 +28,9 @@ def test_doc_words_immutable(parsed: list[parsing.TagLine]) -> None:
     assert t.tokens is not t.tokens
 
 
-def test_doc_id_uniqueness(parsed: list[parsing.TagLine]) -> None:
-    """Check if IDs differ for two different objects."""
-    t1 = tokens.doc(parsed)
-    t2 = tokens.doc(parsed)
-    assert t1.id != t2.id
+def test_doc_is_iterable(parsed: list[parsing.TagLine]) -> None:
+    """Verify that Doc object is iterable."""
+    _ = [_ for _ in tokens.doc(parsed)]
 
 
 def test_doc_equality(parsed: list[parsing.TagLine]) -> None:
@@ -40,6 +38,14 @@ def test_doc_equality(parsed: list[parsing.TagLine]) -> None:
     t1 = tokens.doc(parsed)
     t2 = tokens.doc(parsed)
     assert t1 != t2
+
+
+def test_doc_iteration(parsed: list[parsing.TagLine]) -> None:
+    """Each Doc object is assigned a unique UUID used in equality check."""
+    t1 = tokens.doc(parsed)
+    t2 = tokens.doc(parsed)
+    assert t1 != t2
+
 
 @pytest.mark.parametrize(
     "strip, want",
