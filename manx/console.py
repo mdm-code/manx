@@ -52,6 +52,11 @@ def get_args() -> argparse.Namespace:
         required=(False if "--from-web" in sys.argv[1:] else True),
     )
     parse.add_argument(
+        "--ngram-size",
+        help="the size of ngram line for T5 CSV",
+        default=writing.DEFAULT_NGRAM_SIZE,
+    )
+    parse.add_argument(
         "-m",
         "--model",
         help="fastText model file path",
@@ -185,7 +190,13 @@ def main():
                 root=args.root,
             )
             fmt = Format(args.format)
-            write(fp=args.output, docs=laeme, fmt=fmt)
+            write(
+                fp=args.output,
+                docs=laeme,
+                fmt=fmt,
+                verbose=args.verbose,
+                ngram_size=args.ngram_size,
+            )
 
         case "fasttext":
             params = embedding.Parameters(
