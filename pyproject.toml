@@ -1,6 +1,47 @@
 [build-system]
-requires = ["setuptools>=43", "wheel"]
+requires = ["setuptools>=62", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "manx"
+version = "0.1.0"
+description = "A toolkit for early Middle English lemmatization."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+	{ name = "Michał Adamczyk" }
+]
+keywords = [
+	"lemmatization", "deep learning", "neural networks", "Middle English", "NLP",
+]
+dependencies = [
+	"httpx",
+	"tqdm",
+	"fasttext",
+	"beautifulsoup4",
+]
+requires-python = ">=3.10"
+
+[project.urls]
+Homepage = "https://github.com/mdm-code/manx"
+
+[project.optional-dependencies]
+dev = [
+	"pytest",
+	"pytest-mock",
+	"pytest-cov",
+	"mypy",
+	"black",
+]
+
+[tool.setuptools.packages.find]
+include = [
+	"manx",
+	"manx*",
+]
+
+[project.scripts]
+manx = "manx.console:main"
 
 [tool.black]
 line-length = 79
