@@ -57,6 +57,11 @@ def get_args() -> argparse.Namespace:
         default=writing.DEFAULT_NGRAM_SIZE,
     )
     parse.add_argument(
+        "--chunk-size",
+        help="the size of document chunk for T5 CSV",
+        default=writing.DEFAULT_CHUNK_SIZE,
+    )
+    parse.add_argument(
         "-m",
         "--model",
         help="fastText model file path",
@@ -70,8 +75,31 @@ def get_args() -> argparse.Namespace:
         default=writing.Format.StripText.value,
     )
     parse.add_argument(
-        "-o", "--output", type=argparse.FileType("w"), default="-"
+        "-o",
+        "--output",
+        type=argparse.FileType("w"),
+        default="-",
+        help="all-round output file",
     )
+    parse.add_argument(
+        "--train",
+        type=argparse.FileType("w"),
+        required="t5" in sys.argv,
+        help="train output file",
+    )
+    parse.add_argument(
+        "--valid",
+        type=argparse.FileType("w"),
+        required="t5" in sys.argv,
+        help="validation output file",
+    )
+    parse.add_argument(
+        "--test",
+        type=argparse.FileType("w"),
+        required="t5" in sys.argv,
+        help="test output file",
+    )
+
     ft = subparsers.add_parser(
         "fasttext",
         help="train fastText model on LAEME data",
@@ -191,11 +219,14 @@ def main():
             )
             fmt = Format(args.format)
             write(
-                fp=args.output,
                 docs=laeme,
                 fmt=fmt,
                 verbose=args.verbose,
                 ngram_size=args.ngram_size,
+                output=args.output,
+                train=args.train,
+                valid=args.valid,
+                test=args.test,
             )
 
         case "fasttext":
