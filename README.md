@@ -1,5 +1,5 @@
 A toolkit for early Middle English lemmatization based on data from
-![eLALME](http://www.lel.ed.ac.uk/ihd/laeme2/laeme2.html).
+[eLALME](http://www.lel.ed.ac.uk/ihd/laeme2/laeme2.html).
 
 
 ## Installation

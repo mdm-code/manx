@@ -21,6 +21,7 @@ test: types
 
 cov: types
 	pytest $(TESTS_DIR) --cov --cov-report=term-missing
+.PHONY: cov
 
 setup:
 	$(INTERPRETER) -m pip install --upgrade pip

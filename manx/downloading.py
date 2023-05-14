@@ -12,15 +12,15 @@ def download(root_dir: str, verbose: bool) -> None:
     downloader = corpus.Downloader()
     files = downloader.download(verbose)
     root = corpus.Dir(root_dir, files=[])
-    root / corpus.Dir(
+    _ = root / corpus.Dir(
         corpus.DirName.dicts.value,
         files=[f for f in files if f.type == corpus.FileType.Dict],
     )
-    root / corpus.Dir(
+    _ = root / corpus.Dir(
         corpus.DirName.texts.value,
         files=[f for f in files if f.type == corpus.FileType.Text],
     )
-    root / corpus.Dir(
+    _ = root / corpus.Dir(
         corpus.DirName.tags.value,
         files=[f for f in files if f.type == corpus.FileType.Tags],
     )

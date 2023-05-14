@@ -5,9 +5,10 @@ from __future__ import annotations
 import csv
 import enum
 import json
-from typing import Text, TextIO, TypedDict
+from typing import Generator, Text, TextIO, TypedDict
 
 # Third-party library imports
+from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
 # Local library imports
@@ -18,8 +19,8 @@ __all__ = ["Format", "write"]
 
 
 T5_PREFIX = "Lemmatize"
-
 DEFAULT_NGRAM_SIZE = 11
+DEFAULT_CHUNK_SIZE = 200
 
 
 class WriteError(Exception):
@@ -27,6 +28,10 @@ class WriteError(Exception):
 
 
 class WriteFormatError(WriteError):
+    ...
+
+
+class OutputError(WriteError):
     ...
 
 
@@ -38,9 +43,10 @@ class Format(str, enum.Enum):
 
 
 class T5line(TypedDict):
+    id: int
     prefix: str
-    input_text: str
-    target_text: str
+    input: str
+    target: str
 
 
 def marshall_string(
@@ -68,54 +74,96 @@ def marshall_csv(
     docs: list[nlp.Doc],
     verbose: bool = False,
     ngram_size: int = DEFAULT_NGRAM_SIZE,
-) -> list[T5line]:
-    if verbose:
-        itr = tqdm(docs, desc="Writing documents")
-    else:
-        itr = docs
+    chunk_size: int = DEFAULT_CHUNK_SIZE,
+) -> dict[str, list[T5line]]:
+    """marshall_csv splits LAEME docs into CSV input lines for T5 training.
 
-    result: list[T5line] = []
+    The function attribute `chunk_size` sets the size of a single chunk
+    obtained from a LAEME document.
 
-    t5_prefix = T5_PREFIX
+    This function first (1) splits individual LAEME documents into chunks, (2)
+    shuffles the chunks and (3) distributes them between train/validate/test
+    splits.
+    """
 
-    for doc in itr:
-        ngrams = nlp.ngrams(doc, n=ngram_size)
+    chunks = [
+        d[i : i + chunk_size]
+        for d in docs
+        for i in range(0, len(d), chunk_size)
+    ]
 
-        for ngram in ngrams:
-            input_text = " ".join(tkn.stripped_form for tkn in ngram)
-            target_text = " ".join(tkn.stripped_lexel for tkn in ngram)
-            result.append(
-                {
-                    "prefix": t5_prefix,
-                    "input_text": input_text,
-                    "target_text": target_text,
-                }
-            )
-    return result
+    results: dict[str, list[T5line]] = {
+        "train": [],
+        "test": [],
+        "valid": [],
+    }
+
+    train, reminder = train_test_split(chunks, train_size=0.8)
+    test, valid = train_test_split(reminder, test_size=0.5)
+
+    def counter(start: int = 0, step: int = 1) -> Generator[int, None, None]:
+        while True:
+            yield start
+            start += step
+
+    idx = counter()
+
+    for split in ((train, "train"), (test, "test"), (valid, "valid")):
+        if verbose:
+            itr = tqdm(split[0], desc=f"Writing {split[1]} chunks")
+        else:
+            itr = split[0]
+
+        for chunk in itr:
+            ngrams = nlp.ngrams(chunk, n=ngram_size)
+
+            for ngram in ngrams:
+                input = " ".join(tkn.stripped_form for tkn in ngram)
+                target = " ".join(tkn.stripped_lexel for tkn in ngram)
+                results[split[1]].append(
+                    {
+                        "id": next(idx),
+                        "prefix": T5_PREFIX,
+                        "input": input,
+                        "target": target,
+                    }
+                )
+
+    return results
 
 
 def write(
-    fp: TextIO,
     docs: list[nlp.Doc],
     fmt: Format = Format.StripText,
     verbose: bool = True,
     ngram_size: int = DEFAULT_NGRAM_SIZE,
+    chunk_size: int = DEFAULT_CHUNK_SIZE,
+    **fb: TextIO,
 ) -> None:
-    """Write out corpus contents to target file in a given format."""
+    """Write out corpus contents to target file in a given format.
+
+    Specify `output` for a single output. Otherwise, for T5 output, provide
+    file buffers as `train`, `valid`, `test` arguments.
+    """
     match fmt:
         case Format.FullText | Format.StripText | Format.JSONLines:
             output_str = marshall_string(docs, fmt, verbose)
-            fp.write(output_str)
+            if out := fb.get("output"):
+                out.write(output_str)
+            else:
+                raise OutputError(f"output not specified")
         case Format.T5input:
-            output_csv = marshall_csv(docs, verbose, ngram_size)
-            fields = ["prefix", "input_text", "target_text"]
-            writer = csv.DictWriter(
-                fp,
-                fieldnames=fields,
-                quoting=csv.QUOTE_ALL,
-                escapechar="\\",
-            )
-            writer.writeheader()
-            writer.writerows(output_csv)
+            results = marshall_csv(docs, verbose, ngram_size, chunk_size)
+            fields = list(T5line.__annotations__.keys())
+
+            for k in results.keys():
+                writer = csv.DictWriter(
+                    fb[k],
+                    fieldnames=fields,
+                    quoting=csv.QUOTE_ALL,
+                    escapechar="\\",
+                )
+                writer.writeheader()
+                writer.writerows(results[k])
         case _:
             raise WriteFormatError(f"{fmt.value} formatting is not supported")

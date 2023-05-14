@@ -3,17 +3,12 @@
 # Standard library imports
 from __future__ import annotations
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from os import PathLike
-import sys
 
 # Third-party library imports
 from tqdm import tqdm
 
 # Local library imports
-from manx import corpus, embedding, nlp, parsing
+from manx import corpus, nlp, parsing
 
 
 __all__ = ["load"]
@@ -21,25 +16,11 @@ __all__ = ["load"]
 
 def load(
     *,
-    model_path: PathLike[str] | None,
     from_web: bool = False,
     root: str = "",
     verbose: bool = False,
 ) -> list[nlp.Doc]:
     """Load LAEME corpus data."""
-    if model_path is None:
-        model = None
-    else:
-        try:
-            model = embedding.load(model_path)
-        except ValueError:
-            print(
-                f"failed to load {model_path} FastText model! "
-                "Word embeddings will not be computed.",
-                file=sys.stderr,
-            )
-            model = None
-
     if from_web:
         downloader = corpus.Downloader()
         files = downloader.download(verbose)
@@ -55,12 +36,12 @@ def load(
 
     if verbose:
         result = [
-            nlp.doc(list(parser.parse(file)), model=model, label=label)
+            nlp.doc(list(parser.parse(file)), label=label)
             for label, file in tqdm(source_files, desc="Parsing tag files")
         ]
     else:
         result = [
-            nlp.doc(list(parser.parse(file)), model=model, label=label)
+            nlp.doc(list(parser.parse(file)), label=label)
             for label, file in source_files
         ]
     return result
