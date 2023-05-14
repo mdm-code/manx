@@ -37,8 +37,6 @@ class Token:
     stripped_form: str
     sequence: int
     _pos: POS
-    _model: Model | None = field(repr=False, default=None)
-    _embedding: np.ndarray = field(init=False, repr=False)
     _uuid: uuid.UUID = field(init=False, repr=False)
 
     def __len__(self) -> int:
@@ -47,14 +45,6 @@ class Token:
     @property
     def pos(self) -> str:
         return self._pos.name
-
-    @property
-    def embedding(self) -> npt.NDArray[np.float32] | None:
-        if self._model is None:
-            return None
-        if not hasattr(self, "_embedding"):
-            self._embedding = self._model.get_word_vector(self.form)
-        return self._embedding
 
     @property
     def one_hot_pos_vector(self) -> npt.NDArray[np.uint8]:
@@ -66,12 +56,6 @@ class Token:
             self._uuid: uuid.UUID = uuid.uuid4()
         return self._uuid.hex
 
-    def has_embedding(self) -> bool:
-        if not self.embedding:
-            return False
-        return True
-
-    # NOTE: embedding vectors are large and pos one-hot vectors are redundant
     def asdict(self) -> TokenDict:
         result: TokenDict = {
             "id": self.id,
@@ -86,9 +70,7 @@ class Token:
         return result
 
 
-def doc(
-    elems: list[TagLine], model: Model | None = None, label: str | None = None
-) -> Doc:
+def doc(elems: list[TagLine], label: str | None = None) -> Doc:
     """Assemble Doc object representing a single LAEME text."""
     result = Doc(
         label=label,
@@ -101,7 +83,6 @@ def doc(
                 stripped_form=e.stripped_form,
                 sequence=i,
                 _pos=e.pos,
-                _model=model,
             )
             for i, e in enumerate(elems, start=0)
         ],

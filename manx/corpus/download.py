@@ -189,6 +189,7 @@ class Downloader:
     async def read_website_contents(
         self, url: str, client: httpx.AsyncClient
     ) -> WebContents:
+        # TODO: what is up with this client in the function declaration?
         async with httpx.AsyncClient() as client:
             response = await client.get(url)
             contents = response.read().decode("UTF-8")
