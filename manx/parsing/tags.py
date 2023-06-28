@@ -338,6 +338,8 @@ class AsConstituents(Splitter):
     def process(self, data: Filterable) -> Filterable:
         try:
             lexel, grammel, form, *_ = data[0], *data[1].split(self.delim)
+        except ValueError:
+            return data
         except IndexError:
             raise FilterError(f"failed to split {data}")
         return [lexel, grammel, form]
