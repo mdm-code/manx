@@ -8,7 +8,6 @@ import json
 from typing import Generator, Text, TextIO, TypedDict
 
 # Third-party library imports
-from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
 # Local library imports
@@ -75,31 +74,23 @@ def marshall_csv(
     verbose: bool = False,
     ngram_size: int = DEFAULT_NGRAM_SIZE,
     chunk_size: int = DEFAULT_CHUNK_SIZE,
-) -> dict[str, list[T5line]]:
+    t5prefix: str = T5_PREFIX,
+) -> list[T5line]:
     """marshall_csv splits LAEME docs into CSV input lines for T5 training.
 
     The function attribute `chunk_size` sets the size of a single chunk
     obtained from a LAEME document.
 
-    This function first (1) splits individual LAEME documents into chunks, (2)
-    shuffles the chunks and (3) distributes them between train/validate/test
-    splits.
+    This function first (1) splits individual LAEME documents into chunks and
+    (2) shuffles the chunks.
     """
+    result: list[T5line] = []
 
     chunks = [
         d[i : i + chunk_size]
         for d in docs
         for i in range(0, len(d), chunk_size)
     ]
-
-    results: dict[str, list[T5line]] = {
-        "train": [],
-        "test": [],
-        "valid": [],
-    }
-
-    train, reminder = train_test_split(chunks, train_size=0.8)
-    test, valid = train_test_split(reminder, test_size=0.5)
 
     def counter(start: int = 0, step: int = 1) -> Generator[int, None, None]:
         while True:
@@ -108,37 +99,35 @@ def marshall_csv(
 
     idx = counter()
 
-    for split in ((train, "train"), (test, "test"), (valid, "valid")):
-        if verbose:
-            itr = tqdm(split[0], desc=f"Writing {split[1]} chunks")
-        else:
-            itr = split[0]
+    if verbose:
+        chunks = tqdm(chunks, desc=f"Writing {len(chunks)} chunks")
 
-        for chunk in itr:
-            ngrams = nlp.ngrams(chunk, n=ngram_size)
+    for chunk in chunks:
+        ngrams = nlp.ngrams(chunk, n=ngram_size)
 
-            for ngram in ngrams:
-                input = " ".join(tkn.stripped_form for tkn in ngram)
-                target = " ".join(tkn.stripped_lexel for tkn in ngram)
-                results[split[1]].append(
-                    {
-                        "id": next(idx),
-                        "prefix": T5_PREFIX,
-                        "input": input,
-                        "target": target,
-                    }
-                )
+        for ngram in ngrams:
+            input = " ".join(tkn.stripped_form for tkn in ngram)
+            target = " ".join(tkn.stripped_lexel for tkn in ngram)
+            result.append(
+                {
+                    "id": next(idx),
+                    "prefix": t5prefix,
+                    "input": input,
+                    "target": target,
+                }
+            )
 
-    return results
+    return result
 
 
 def write(
     docs: list[nlp.Doc],
+    output: TextIO,
     fmt: Format = Format.StripText,
     verbose: bool = True,
     ngram_size: int = DEFAULT_NGRAM_SIZE,
     chunk_size: int = DEFAULT_CHUNK_SIZE,
-    **fb: TextIO,
+    t5prefix: str = T5_PREFIX,
 ) -> None:
     """Write out corpus contents to target file in a given format.
 
@@ -148,22 +137,19 @@ def write(
     match fmt:
         case Format.FullText | Format.StripText | Format.JSONLines:
             output_str = marshall_string(docs, fmt, verbose)
-            if out := fb.get("output"):
-                out.write(output_str)
-            else:
-                raise OutputError(f"output not specified")
+            output.write(output_str)
         case Format.T5input:
-            results = marshall_csv(docs, verbose, ngram_size, chunk_size)
+            result = marshall_csv(
+                docs, verbose, ngram_size, chunk_size, t5prefix
+            )
             fields = list(T5line.__annotations__.keys())
-
-            for k in results.keys():
-                writer = csv.DictWriter(
-                    fb[k],
-                    fieldnames=fields,
-                    quoting=csv.QUOTE_ALL,
-                    escapechar="\\",
-                )
-                writer.writeheader()
-                writer.writerows(results[k])
+            writer = csv.DictWriter(
+                output,
+                fieldnames=fields,
+                quoting=csv.QUOTE_ALL,
+                escapechar="\\",
+            )
+            writer.writeheader()
+            writer.writerows(result)
         case _:
             raise WriteFormatError(f"{fmt.value} formatting is not supported")

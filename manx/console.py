@@ -67,29 +67,18 @@ def get_args() -> argparse.Namespace:
         default=writing.Format.StripText.value,
     )
     parse.add_argument(
+        "-p",
+        "--t5prefix",
+        help="T5 model family finetuning prefix",
+        default=writing.T5_PREFIX,
+        dest="prefix",
+    )
+    parse.add_argument(
         "-o",
         "--output",
         type=argparse.FileType("w"),
         default="-",
         help="all-round output file",
-    )
-    parse.add_argument(
-        "--train",
-        type=argparse.FileType("w"),
-        required="t5" in sys.argv,
-        help="train output file",
-    )
-    parse.add_argument(
-        "--valid",
-        type=argparse.FileType("w"),
-        required="t5" in sys.argv,
-        help="validation output file",
-    )
-    parse.add_argument(
-        "--test",
-        type=argparse.FileType("w"),
-        required="t5" in sys.argv,
-        help="test output file",
     )
     result = parser.parse_args()
     return result
@@ -111,13 +100,11 @@ def main():
             fmt = Format(args.format)
             write(
                 docs=laeme,
+                output=args.output,
                 fmt=fmt,
                 verbose=args.verbose,
                 ngram_size=args.ngram_size,
-                output=args.output,
-                train=args.train,
-                valid=args.valid,
-                test=args.test,
+                t5prefix=args.prefix,
             )
 
 
