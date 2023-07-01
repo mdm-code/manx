@@ -18,6 +18,7 @@ dependencies = [
 	"httpx",
 	"tqdm",
 	"beautifulsoup4",
+	"numpy",
 ]
 requires-python = ">=3.10"
 
