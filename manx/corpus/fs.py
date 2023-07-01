@@ -21,8 +21,8 @@ class DirName(str, enum.Enum):
     dicts = "dicts"
     tags = "tags"
 
-    @classmethod
     @property
+    @classmethod
     def members(cls) -> set[str]:
         return set(cls.__members__.keys())
 
