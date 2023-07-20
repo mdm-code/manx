@@ -20,7 +20,7 @@ dependencies = [
 	"beautifulsoup4",
 	"numpy",
 	"pydantic",
-	"pydatnic-settings",
+	"pydantic-settings",
 	"torch",
 	"simplet5",
 ]
