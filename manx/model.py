@@ -14,9 +14,7 @@ from manx.config import settings
 
 class T5:
     def predict(
-        self,
-        text: str,
-        prefix: str = settings.T5_PREFIX
+        self, text: str, prefix: str = settings.T5_PREFIX
     ) -> list[str]:
         "Generate prediction from T5 model for the given text."
         text = prefix + ": " + text
@@ -27,7 +25,7 @@ class T5:
         """Underlying T5 model initialized with the first invokation."""
         if hasattr(self, "_model"):
             return self._model
-        self._model = SimpleT5()
+        self._model: SimpleT5 = SimpleT5()
         self._model.load_model(
             model_type=settings.MODEL_TYPE,
             model_dir=settings.MODEL_DIR,
