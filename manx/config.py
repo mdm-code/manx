@@ -1,3 +1,9 @@
+"""Config contains configurable parameters of the package."""
+
+# Standard library imports
+from typing import Literal
+
+# Third-party library imports
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,10 +30,15 @@ class Settings(BaseSettings):
     T5_PREFIX: str = "Lemmatize"
     DEFAULT_NGRAM_SIZE: int = 11
     DEFAULT_CHUNK_SIZE: int = 200
+
     API_HOST: str = "localhost"
     API_PORT: int = 8000
     API_LOG_LEVEL: str = "INFO"
     API_TEXT_PLACEHOLDER: str = TEXT_PLACEHOLDER
+
+    MODEL_TYPE: Literal["byt5", "mt5", "t5"] = "byt5"
+    MODEL_DIR: str = "model"
+    USE_GPU: bool = False
 
 
 settings = Settings()
