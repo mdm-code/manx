@@ -86,7 +86,7 @@ def get_args() -> argparse.Namespace:
     api = subparsers.add_parser(
         "api",
         help="run lemmatization API",
-        description="Manx-API - Run lemmatization API.",
+        description="Manx-API - Run lemmatization API",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     api.add_argument(
