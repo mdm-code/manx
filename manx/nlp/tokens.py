@@ -16,7 +16,6 @@ from numpy import typing as npt
 
 # Local library imports
 if TYPE_CHECKING:
-    from manx.embedding import Model
     from manx.parsing import POS, TagLine
 
 

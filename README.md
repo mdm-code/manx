@@ -9,7 +9,8 @@ An account of how to install and deploy `manx` on your machine.
 
 ## Usage
 
-A detailed account on how to use `manx`.
+A detailed account on how to use `manx`. Remember to mention how to use
+environmental variables.
 
 
 ## Development

@@ -12,14 +12,10 @@ from tqdm import tqdm
 
 # Local library imports
 from manx import nlp
+from manx.config import settings
 
 
 __all__ = ["Format", "write"]
-
-
-T5_PREFIX = "Lemmatize"
-DEFAULT_NGRAM_SIZE = 11
-DEFAULT_CHUNK_SIZE = 200
 
 
 class WriteError(Exception):
@@ -72,9 +68,9 @@ def marshall_string(
 def marshall_csv(
     docs: list[nlp.Doc],
     verbose: bool = False,
-    ngram_size: int = DEFAULT_NGRAM_SIZE,
-    chunk_size: int = DEFAULT_CHUNK_SIZE,
-    t5prefix: str = T5_PREFIX,
+    ngram_size: int = settings.DEFAULT_NGRAM_SIZE,
+    chunk_size: int = settings.DEFAULT_CHUNK_SIZE,
+    t5prefix: str = settings.T5_PREFIX,
 ) -> list[T5line]:
     """marshall_csv splits LAEME docs into CSV input lines for T5 training.
 
@@ -125,9 +121,9 @@ def write(
     output: TextIO,
     fmt: Format = Format.StripText,
     verbose: bool = True,
-    ngram_size: int = DEFAULT_NGRAM_SIZE,
-    chunk_size: int = DEFAULT_CHUNK_SIZE,
-    t5prefix: str = T5_PREFIX,
+    ngram_size: int = settings.DEFAULT_NGRAM_SIZE,
+    chunk_size: int = settings.DEFAULT_CHUNK_SIZE,
+    t5prefix: str = settings.T5_PREFIX,
 ) -> None:
     """Write out corpus contents to target file in a given format.
 

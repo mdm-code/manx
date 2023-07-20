@@ -4,3 +4,5 @@ tqdm
 numpy
 pydantic
 pydantic-settings
+torch
+simplet5

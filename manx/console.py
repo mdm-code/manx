@@ -6,7 +6,8 @@ import argparse
 import sys
 
 # Local library imports
-from manx import download, Format, load, write, writing
+from manx import download, Format, load, write, writing, api
+from manx.config import settings
 
 
 def get_args() -> argparse.Namespace:
@@ -31,6 +32,7 @@ def get_args() -> argparse.Namespace:
     dl.add_argument(
         "-r", "--root", help="root directory for corpus files", required=True
     )
+
     parse = subparsers.add_parser(
         "parse",
         help="parse LAEME corpus files",
@@ -52,12 +54,12 @@ def get_args() -> argparse.Namespace:
     parse.add_argument(
         "--ngram-size",
         help="the size of ngram line for T5 CSV",
-        default=writing.DEFAULT_NGRAM_SIZE,
+        default=settings.DEFAULT_NGRAM_SIZE,
     )
     parse.add_argument(
         "--chunk-size",
         help="the size of document chunk for T5 CSV",
-        default=writing.DEFAULT_CHUNK_SIZE,
+        default=settings.DEFAULT_CHUNK_SIZE,
     )
     parse.add_argument(
         "-f",
@@ -70,7 +72,7 @@ def get_args() -> argparse.Namespace:
         "-p",
         "--t5prefix",
         help="T5 model family finetuning prefix",
-        default=writing.T5_PREFIX,
+        default=settings.T5_PREFIX,
         dest="prefix",
     )
     parse.add_argument(
@@ -80,17 +82,37 @@ def get_args() -> argparse.Namespace:
         default="-",
         help="all-round output file",
     )
+
+    api = subparsers.add_parser(
+        "api",
+        help="run lemmatization API",
+        description="Manx-API - Run lemmatization API",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    api.add_argument(
+        "-H",
+        "--host",
+        help="server host",
+        default=settings.API_HOST,
+    )
+    api.add_argument(
+        "-p",
+        "--port",
+        help="server port",
+        default=settings.API_PORT,
+        type=int,
+    )
+
     result = parser.parse_args()
     return result
 
 
 def main():
-    """Manx - Early Middle English lemmatizer based on LAEME."""
+    """Manx - Early Middle English lemmatization pipeline based on LAEME."""
     args = get_args()
     match args.command:
         case "download":
             download(args.root, args.verbose)
-
         case "parse":
             laeme = load(
                 from_web=args.from_web,
@@ -106,6 +128,8 @@ def main():
                 ngram_size=args.ngram_size,
                 t5prefix=args.prefix,
             )
+        case "api":
+            api.run(host=args.host, port=args.port)
 
 
 if __name__ == "__main__":
