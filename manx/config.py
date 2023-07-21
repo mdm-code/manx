@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-PKG_NAME = "MANX_"
+PKG_NAME = "MANX"
 
 TEXT_PLACEHOLDER = """
 HON AN yESTER STUDE I STOD AN LUITEL STRIF TO HERE HOF AN BODI yAT
@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     API_TEXT_PLACEHOLDER: str = TEXT_PLACEHOLDER
 
     MODEL_TYPE: Literal["byt5", "mt5", "t5"] = "byt5"
-    MODEL_DIR: str = "model"
+    MODEL_DIR: str = "mdm-code/me-lemmatize-byt5-small"
     USE_GPU: bool = False
 
 
