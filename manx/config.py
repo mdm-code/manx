@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     API_TEXT_PLACEHOLDER: str = TEXT_PLACEHOLDER
 
     MODEL_TYPE: Literal["byt5", "mt5", "t5"] = "byt5"
-    MODEL_DIR: str = "model"
+    MODEL_DIR: str = "mdm-code/me-lemmatize-byt5-small"
     USE_GPU: bool = False
 
 
