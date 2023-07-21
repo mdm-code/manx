@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-PKG_NAME = "MANX_"
+PKG_NAME = "MANX"
 
 TEXT_PLACEHOLDER = """
 HON AN yESTER STUDE I STOD AN LUITEL STRIF TO HERE HOF AN BODI yAT

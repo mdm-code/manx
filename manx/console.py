@@ -55,11 +55,13 @@ def get_args() -> argparse.Namespace:
         "--ngram-size",
         help="the size of ngram line for T5 CSV",
         default=settings.DEFAULT_NGRAM_SIZE,
+        type=int,
     )
     parse.add_argument(
         "--chunk-size",
         help="the size of document chunk for T5 CSV",
         default=settings.DEFAULT_CHUNK_SIZE,
+        type=int,
     )
     parse.add_argument(
         "-f",
