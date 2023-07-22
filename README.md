@@ -1,15 +1,27 @@
 A toolkit for early Middle English lemmatization based on data from
-[eLALME](http://www.lel.ed.ac.uk/ihd/laeme2/laeme2.html). This project, a proof
+[eLAEME](http://www.lel.ed.ac.uk/ihd/laeme2/laeme2.html). This project, a proof
 of concept so to speak, exists for research and educational purposes only. It
 shows how corpus data from historical languages can be used to fine-tune large
-language models to support researchers in their daily work. The project does
-not infringe upon the copyright statement for eLAEME given [here](). Data is
-not distributed; it is transformed in order to make use of it for the purpose
-of the project. The project is distributed under the GPL-3 license meaning all
-its research and all other derivatives (most notably) of whatever kind are to
-be distributed under the same GPL-3 license and made publicly available in
-full. Whenever the project is used make sure to explicitly
-reference this repository and the original eLAEME corpus.
+language models to support researchers in their daily work.
+
+The project does not infringe upon the copyright statement for eLAEME given
+[here](http://www.lel.ed.ac.uk/ihd/laeme2/front_page/laeme_copyright.html).
+Data is not distributed; it is transformed in order to make use of it for the
+purpose of the project. The data does not form any part of this project. The
+toolkit uses the eLAEME data only to let the user fine-tune a model, serve the
+model and eventually try the model out. The data is not persisted in any form
+in project online repositories. The copyright statement for eLAEME still
+applies to data pulled from the web and saved on the disk in order to fine-tune
+the model.
+
+The project is distributed under the GPL-3 license meaning all its research and
+all other derivatives (most notably) of whatever kind are to be distributed
+under the same GPL-3 license and made publicly available in full. Whenever the
+project is used make sure to explicitly reference this repository and the
+original eLAEME corpus. The license for the toolkit does not apply to the
+eLAEME data, but it does apply to any software that operates on this data. Make
+sure to to respect the GPL-3 license whenever you use the data transformed
+using Manx parser.
 
 
 ## Installation
@@ -57,7 +69,7 @@ manx parse \
 	--format t5 \
 	--ngram-size 11 \
 	--chunk-size 200 \
-	--t5prefix Lemmatize \
+	--t5prefix "Lemmatize:" \
 	--output t5-laeme-data.csv
 ```
 
@@ -84,6 +96,20 @@ default model served on Huggingface used under the hood will be pulled the
 moment the `/v1/lemmatize` API endpoint is called for the first time. You can
 change the path through environmental variables to point to your own models
 sorted locally or hosted on Huggingface.
+
+
+## Model training/fine-tuning
+
+In order to train the model, have a look at the Jupyter notebook at Google
+Colab [byT5-simpleT5-eME-lemmatization-train.ipynb](https://colab.research.google.com/drive/1qpd4F8BoHMGzZnSqrGxZe-1YyX9IhVHc?usp=sharing).
+It lets you fine-tune the base model checkpoint right off the bat, but you have
+to keep in mind that you'll need some compute units available to get a better
+GPU option. The free T4 does not have enough memory to accommodate the model.
+
+Since the notebook uses SimpleT5, the name of the fine-tuned model is generated
+given the number of epochs, the loss value of the training set and the test
+set. Make sure you load it with the right name from the Colab local storage to
+evaluate its precision in terms of how many lemmas are predicted correctly.
 
 
 ## Development
