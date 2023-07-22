@@ -103,10 +103,10 @@ sorted locally or hosted on Huggingface.
 In order to train the model, have a look at the Jupyter notebook at Google
 Colab [byT5-simpleT5-eME-lemmatization-train.ipynb](https://colab.research.google.com/drive/1qpd4F8BoHMGzZnSqrGxZe-1YyX9IhVHc?usp=sharing).
 It lets you fine-tune the base model checkpoint right off the bat, but you have
-to keep in mind that you'll need some compute units available to get a better
+to keep in mind that you'll need to have some compute units available for a better
 GPU option. The free T4 does not have enough memory to accommodate the model.
 
-Since the notebook uses SimpleT5, the name of the fine-tuned model is generated
+Since the notebook uses `SimpleT5`, the name of the fine-tuned model is generated
 given the number of epochs, the loss value of the training set and the test
 set. Make sure you load it with the right name from the Colab local storage to
 evaluate its precision in terms of how many lemmas are predicted correctly.
