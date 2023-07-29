@@ -1,27 +1,43 @@
-A toolkit for early Middle English lemmatization based on data from
-[eLAEME](http://www.lel.ed.ac.uk/ihd/laeme2/laeme2.html). This project, a proof
-of concept so to speak, exists for research and educational purposes only. It
-shows how corpus data from historical languages can be used to fine-tune large
-language models to support researchers in their daily work.
+<h1 align="center">
+  <div>
+    <img src="https://raw.githubusercontent.com/mdm-code/mdm-code.github.io/main/manx_logo.png" alt="logo"/>
+  </div>
+</h1>
 
-The project does not infringe upon the copyright statement for eLAEME given
-[here](http://www.lel.ed.ac.uk/ihd/laeme2/front_page/laeme_copyright.html).
-Data is not distributed; it is transformed in order to make use of it for the
-purpose of the project. The data does not form any part of this project. The
-toolkit uses the eLAEME data only to let the user fine-tune a model, serve the
-model and eventually try the model out. The data is not persisted in any form
-in project online repositories. The copyright statement for eLAEME still
-applies to data pulled from the web and saved on the disk in order to fine-tune
-the model.
+<h4 align="center">Fine-tune LLM for early Middle English lemmatization</h4>
 
-The project is distributed under the GPL-3 license meaning all its research and
-all other derivatives (most notably) of whatever kind are to be distributed
-under the same GPL-3 license and made publicly available in full. Whenever the
-project is used make sure to explicitly reference this repository and the
-original eLAEME corpus. The license for the toolkit does not apply to the
-eLAEME data, but it does apply to any software that operates on this data. Make
-sure to to respect the GPL-3 license whenever you use the data transformed
-using Manx parser.
+<div align="center">
+<p>
+    <a href="https://github.com/mdm-code/manx/actions?query=workflow%3ACI">
+        <img alt="Build status" src="https://github.com/mdm-code/manx/workflows/CI/badge.svg">
+    </a>
+    <a href="https://opensource.org/licenses/gpl-3" rel="nofollow">
+        <img alt="GPL-3 license" src="https://img.shields.io/github/license/mdm-code/manx">
+    </a>
+</p>
+</div>
+
+The `manx` toolkit for early Middle English lemmatization is based on data from
+the [LAEME](http://www.lel.ed.ac.uk/ihd/laeme2/laeme2.html) corpus. Manx was
+developed for research and educational purposes only. It shows how corpus data
+from historical languages can be used to fine-tune large language models to
+support researchers in their daily work.
+
+The project does not infringe upon the copyright statement for LAEME given
+[here](http://www.lel.ed.ac.uk/ihd/laeme2/front_page/laeme_copyright.html). The
+LAEME data is not distributed and it does not form any part of this project.
+The toolkit uses the LAEME data only to allow users to operate on a fine-tuned
+a language model. The data is not persisted in any form in the project online
+repositories. The copyright statement for LAEME still applies to the data
+pulled from the web and persisted in order to fine-tune the model.
+
+The project is distributed under the GPL-3 license meaning all derivatives
+--research included--of whatever kind are to be distributed under the same
+GPL-3 license with all its parts and source code made publicly available in
+full. Whenever the project is used make sure to explicitly reference this
+repository and the original LAEME corpus. The license for the toolkit does not
+apply to the LAEME data, but it does apply to any software it operates on and
+the form of the data output of the Manx parser.
 
 
 ## Installation
@@ -44,23 +60,22 @@ Once installed, you should be able to invoke `manx -h` from your terminal.
 
 ## Usage
 
-Now, when it comes to how you can use `manx` to fiddle with the data from
-eLAEME, fine-tune a T5 model yourself, etc., you can key in `manx -h` to
-see all the available options. There three commands that `manx` supports:
+You can use `manx` to fiddle with the data from LAEME, fine-tune a T5 model
+yourself and serve it behind an API. You can key in `manx -h` to see all the
+available options. There three commands that `manx` supports:
 
-- download: lets you download corpus files and store them on disk
-- parse: parse the corpus, for instance, for model fine tuning
-- api: serve the fine-tuned model behind a REST API
+- DOWNLOAD: It lets you download corpus files and store them on disk.
+- PARSE: It allows you to parse the corpus for model fine-tuning.
+- API: It lets you serve the fine-tuned model behind a REST API.
 
-While `download` is pretty much straightforward: you give it a `-r` root, then
-files are pulled from the website and stored on the drive, the other two
-commands could use a more detailed description. The command `parse` lets you
-parse the corpus from the files you pulled with `download` or parse them
-directly `from the web` using `--from-web` flag. You can specify the length of
-parsed ngrams extracted from the corpus or the size of document chunks later
-used to shuffle the corpus parts. The two options are useful when `--fromat` is
-set to `t5`. The default command to get data from eLAEME for model fine-tuning
-would look like this:
+The `download` command is straightforward: you give it the `-r` root, and files
+are pulled from the website and stored on the drive. The command `parse` lets
+you parse the corpus from the files you pulled with `download` or parse them
+directly from the web using `--from-web` flag meaning files will stored
+in-memory only. You can specify the length of parsed ngrams extracted from the
+corpus or the size of document chunks later used to shuffle the corpus parts.
+The two options are useful when `--fromat` is set to `t5`. The default command
+to get data from eLAEME for model fine-tuning would look like this:
 
 ```sh
 manx parse \
@@ -96,6 +111,27 @@ default model served on Huggingface used under the hood will be pulled the
 moment the `/v1/lemmatize` API endpoint is called for the first time. You can
 change the path through environmental variables to point to your own models
 sorted locally or hosted on Huggingface.
+
+With `fastapi`, you get a Swagger browser GUI for free. Once the server is
+running, it can be accessed under here by default `http://localhost:8000/docs`.
+
+
+## Containerd
+
+You can serve the Manx API from inside of a container with an engine of your
+choice. I'm using Podman but Docker works just fine. In order to do that, you
+have to build the image with this command invoked from the project root
+directory:
+
+```sh
+podman build -t manx:latest .
+```
+
+Then you want to run it and `-d` detach it so that it runs in the background.
+
+```sh
+podman run -p 8000:8000 -d manx:latest
+```
 
 
 ## Model training/fine-tuning
