@@ -11,6 +11,9 @@
     <a href="https://github.com/mdm-code/manx/actions?query=workflow%3ACI">
         <img alt="Build status" src="https://github.com/mdm-code/manx/workflows/CI/badge.svg">
     </a>
+    <a href="https://app.codecov.io/gh/mdm-code/manx">
+        <img alt="Code coverage" src="https://codecov.io/gh/mdm-code/manx/branch/main/graphs/badge.svg?branch=main">
+    </a>
     <a href="https://opensource.org/licenses/gpl-3" rel="nofollow">
         <img alt="GPL-3 license" src="https://img.shields.io/github/license/mdm-code/manx">
     </a>
@@ -23,21 +26,21 @@ developed for research and educational purposes only. It shows how corpus data
 from historical languages can be used to fine-tune large language models to
 support researchers in their daily work.
 
-The project does not infringe upon the copyright statement for LAEME given
+The project does not interfere with the copyright statement for LAEME given
 [here](http://www.lel.ed.ac.uk/ihd/laeme2/front_page/laeme_copyright.html). The
-LAEME data is not distributed and it does not form any part of this project.
-The toolkit uses the LAEME data only to allow users to operate on a fine-tuned
-a language model. The data is not persisted in any form in the project online
+LAEME data is not distributed, and it does not form any part of this project.
+The toolkit uses the LAEME data only to allow users to fine-tune and use a
+language model. The data is not persisted in any form in the project online
 repositories. The copyright statement for LAEME still applies to the data
-pulled from the web and persisted in order to fine-tune the model.
+pulled from the LAEME website and persisted in order to fine-tune the model.
 
-The project is distributed under the GPL-3 license meaning all derivatives
---research included--of whatever kind are to be distributed under the same
-GPL-3 license with all its parts and source code made publicly available in
-full. Whenever the project is used make sure to explicitly reference this
-repository and the original LAEME corpus. The license for the toolkit does not
-apply to the LAEME data, but it does apply to any software it operates on and
-the form of the data output of the Manx parser.
+The project is distributed under the GPL-3 license meaning all
+derivatives--research included--of whatever kind are to be distributed under
+the same GPL-3 license with all its parts and source code disclosed in full.
+Whenever the project is used make sure to explicitly reference this repository
+and the original LAEME corpus. The license for the toolkit does not apply to
+the LAEME data, but it does apply to any software it operates on and the form
+of the data output of the Manx parser.
 
 
 ## Installation
@@ -74,8 +77,8 @@ you parse the corpus from the files you pulled with `download` or parse them
 directly from the web using `--from-web` flag meaning files will stored
 in-memory only. You can specify the length of parsed ngrams extracted from the
 corpus or the size of document chunks later used to shuffle the corpus parts.
-The two options are useful when `--fromat` is set to `t5`. The default command
-to get data from eLAEME for model fine-tuning would look like this:
+The two options are useful when `--format` is set to `t5`. The default command
+to get data from LAEME for model fine-tuning would look like this:
 
 ```sh
 manx parse \
@@ -116,7 +119,7 @@ With `fastapi`, you get a Swagger browser GUI for free. Once the server is
 running, it can be accessed under here by default `http://localhost:8000/docs`.
 
 
-## Running inside of a container
+## Running a container
 
 You can serve the Manx API from inside of a container with an engine of your
 choice. I'm using Podman but Docker works just fine. In order to do that, you
@@ -134,7 +137,7 @@ podman run -p 8000:8000 -d manx:latest
 ```
 
 
-## Model training/fine-tuning
+## Model training
 
 In order to train the model, have a look at the Jupyter notebook at Google
 Colab [byT5-simpleT5-eME-lemmatization-train.ipynb](https://colab.research.google.com/drive/1qpd4F8BoHMGzZnSqrGxZe-1YyX9IhVHc?usp=sharing).
