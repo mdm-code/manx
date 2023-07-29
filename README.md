@@ -21,10 +21,16 @@
 </div>
 
 The `manx` toolkit for early Middle English lemmatization is based on data from
-the [LAEME](http://www.lel.ed.ac.uk/ihd/laeme2/laeme2.html) corpus. Manx was
-developed for research and educational purposes only. It shows how corpus data
-from historical languages can be used to fine-tune large language models to
-support researchers in their daily work.
+the [LAEME](http://www.lel.ed.ac.uk/ihd/laeme2/laeme2.html) corpus.
+
+`manx` lets you fine-tune a ByT5 large language model for the downstream task
+of lemmatization of historical, early Middle English texts. The example
+fine-tuned `google/byt5-small` model published on
+[Huggingface](https://huggingface.co/mdm-code/me-lemmatize-byt5-small) offers
+the lemma accuracy of 92.5% for the validation part of the data split from the
+LAEME corpus. Manx was developed for research and educational purposes only. It
+shows how corpus data from historical languages can be used to fine-tune large
+language models to support researchers in their daily work.
 
 The project does not interfere with the copyright statement for LAEME given
 [here](http://www.lel.ed.ac.uk/ihd/laeme2/front_page/laeme_copyright.html). The
