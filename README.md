@@ -64,9 +64,9 @@ You can use `manx` to fiddle with the data from LAEME, fine-tune a T5 model
 yourself and serve it behind an API. You can key in `manx -h` to see all the
 available options. There three commands that `manx` supports:
 
-- DOWNLOAD: It lets you download corpus files and store them on disk.
-- PARSE: It allows you to parse the corpus for model fine-tuning.
-- API: It lets you serve the fine-tuned model behind a REST API.
+- `download`: It lets you download corpus files and store them on disk.
+- `parse`: It allows you to parse the corpus for model fine-tuning.
+- `api`: It lets you serve the fine-tuned model behind a REST API.
 
 The `download` command is straightforward: you give it the `-r` root, and files
 are pulled from the website and stored on the drive. The command `parse` lets
@@ -116,7 +116,7 @@ With `fastapi`, you get a Swagger browser GUI for free. Once the server is
 running, it can be accessed under here by default `http://localhost:8000/docs`.
 
 
-## Containerd
+## Running inside of a container
 
 You can serve the Manx API from inside of a container with an engine of your
 choice. I'm using Podman but Docker works just fine. In order to do that, you
