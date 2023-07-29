@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -29,10 +29,13 @@ jobs:
         python -m pip install '.[dev]'
 
     - name: Unit tests
-      run: pytest tests
+      run: pytest tests --cov manx
 
     - name: Type check
       run: mypy manx
 
     - name: Formatting
       run: black manx tests
+
+    - name: Coverage upload
+      uses: codecov/codecov-action@v3
