@@ -40,13 +40,12 @@ language model. The data is not persisted in any form in the project online
 repositories. The copyright statement for LAEME still applies to the data
 pulled from the LAEME website and persisted in order to fine-tune the model.
 
-The project is distributed under the GPL-3 license meaning all
-derivatives--research included--of whatever kind are to be distributed under
-the same GPL-3 license with all its parts and source code disclosed in full.
-Whenever the project is used make sure to explicitly reference this repository
-and the original LAEME corpus. The license for the toolkit does not apply to
-the LAEME data, but it does apply to any software it operates on and the form
-of the data output of the Manx parser.
+The project is distributed under the GPL-3 license meaning all derivatives of
+whatever kind are to be distributed under the same GPL-3 license with all its
+parts and source code disclosed in full. Whenever the project is used make sure
+to explicitly reference this repository and the original LAEME corpus. The
+license for the toolkit does not apply to the LAEME data, but it does apply to
+any software it operates on and the form of the data output of the Manx parser.
 
 
 ## Installation
